@@ -2,6 +2,8 @@ import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RotateCw,
+  Volume2,
+  VolumeX,
   Compass,
   Clock,
   ArrowRight,
@@ -16,6 +18,7 @@ import { TOPICS } from '../../data/topics';
 import type { Topic, Category, Difficulty } from '../../types/topic';
 import { useCodeQuest } from '../../context/CodeQuestContext';
 import { getTodayDateString } from '../../utils/date';
+import { startWheelSpinSound } from '../../utils/audio';
 
 interface SpinningWheelProps {
   onSelectTopic?: (topic: Topic) => void;
@@ -32,6 +35,14 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | 'All'>('All');
   const [onlyDueRevisions, setOnlyDueRevisions] = useState<boolean>(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const cancelAudioRef = useRef<(() => void) | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      cancelAudioRef.current?.();
+    };
+  }, []);
 
   // Wheel Animation State
   const [rotation, setRotation] = useState<number>(0);
@@ -90,6 +101,11 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
   const handleSpin = () => {
     if (isSpinning || eligibleTopics.length === 0) return;
 
+    if (soundEnabled) {
+      cancelAudioRef.current?.();
+      cancelAudioRef.current = startWheelSpinSound(4200);
+    }
+
     setIsSpinning(true);
     setShowResultCard(false);
 
@@ -121,6 +137,12 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
   // Daily Challenge Direct Launch or Spin
   const handleSpinForDaily = () => {
     if (!dailyTopic || isSpinning) return;
+
+    if (soundEnabled) {
+      cancelAudioRef.current?.();
+      cancelAudioRef.current = startWheelSpinSound(3800);
+    }
+
     setIsSpinning(true);
     setShowResultCard(false);
 
@@ -378,7 +400,21 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
 
             {/* Quick Status Bar */}
             <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
-              <span className="flex items-center gap-1.5 font-medium text-slate-300">
+              <button
+                  type="button"
+                  onClick={() => setSoundEnabled((prev) => !prev)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono transition-all ${
+                    soundEnabled
+                      ? 'border-violet-500/30 bg-violet-950/30 text-violet-300 hover:bg-violet-900/40'
+                      : 'border-white/10 bg-white/[0.02] text-slate-500 hover:text-slate-300'
+                  }`}
+                  title={soundEnabled ? 'Mute wheel sound' : 'Enable wheel sound'}
+                >
+                  {soundEnabled ? <Volume2 className="h-3.5 w-3.5 text-violet-400" /> : <VolumeX className="h-3.5 w-3.5 text-slate-500" />}
+                  <span>{soundEnabled ? 'Sound ON' : 'Muted'}</span>
+                </button>
+                <span>&bull;</span>
+                <span className="flex items-center gap-1.5 font-medium text-slate-300">
                 <span className="h-2 w-2 rounded-full bg-violet-400 animate-ping" />
                 {eligibleTopics.length} topics available in current pool
               </span>
