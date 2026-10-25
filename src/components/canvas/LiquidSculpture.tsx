@@ -129,22 +129,18 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         }
 
         void main() {
-          // Slow organic pulsation
           float t = uTime * uSpeed;
           
-          // Layered multi-frequency displacement for liquid organic form
           vec3 noisePos = position * uNoiseDensity + vec3(t * 0.35, t * 0.28, t * 0.42);
           float n1 = snoise(noisePos);
           float n2 = snoise(noisePos * 2.1 + vec3(t * 0.15)) * 0.5;
           float noise = (n1 + n2) * uNoiseStrength;
 
-          // Mouse warp influence
           float mouseDist = length(position.xy - uMouse * 2.0);
           float mousePush = smoothstep(2.5, 0.0, mouseDist) * 0.25;
 
           vec3 displaced = position + normal * (noise + mousePush);
 
-          // Finite difference to calculate smooth distorted normal
           float eps = 0.015;
           vec3 tx = position + vec3(eps, 0.0, 0.0);
           vec3 ty = position + vec3(0.0, eps, 0.0);
@@ -170,10 +166,10 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       const fragmentShader = `
         uniform float uTime;
-        uniform vec3 uColorOrange;
-        uniform vec3 uColorBlue;
-        uniform vec3 uColorViolet;
-        uniform vec3 uColorCyan;
+        uniform vec3 uColorAmber;
+        uniform vec3 uColorFrost;
+        uniform vec3 uColorCream;
+        uniform vec3 uColorAsh;
 
         varying vec3 vNormal;
         varying vec3 vViewPosition;
@@ -184,59 +180,56 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
           vec3 V = normalize(vViewPosition);
           vec3 N = normalize(vNormal);
 
-          // Fresnel incidence
           float NdotV = max(dot(N, V), 0.0);
           float fresnel = pow(1.0 - NdotV, 3.0);
           float deepFresnel = pow(1.0 - NdotV, 1.8);
 
-          // Rim lighting setup inspired by Image 2
-          // 1. Warm Orange Rim (Top / Upper-Left crest)
-          vec3 dirOrange = normalize(vec3(-0.85, 0.8, 0.35));
-          float rimOrange = pow(max(dot(N, dirOrange), 0.0), 2.2) * deepFresnel;
-          vec3 orangeGlow = uColorOrange * rimOrange * 2.8;
+          // Frozen Mist Lighting Model
+          // 1. Burnished Amber Rim (#DD700B) on upper crest
+          vec3 dirAmber = normalize(vec3(-0.85, 0.8, 0.35));
+          float rimAmber = pow(max(dot(N, dirAmber), 0.0), 2.2) * deepFresnel;
+          vec3 amberGlow = uColorAmber * rimAmber * 2.9;
 
-          // 2. Deep Electric Blue Rim (Lower-Right & Underbelly)
-          vec3 dirBlue = normalize(vec3(0.9, -0.75, 0.4));
-          float rimBlue = pow(max(dot(N, dirBlue), 0.0), 1.9) * deepFresnel;
-          vec3 blueGlow = uColorBlue * rimBlue * 2.5;
+          // 2. Pale Frost Mist Rim (#D9DADF) on lower-right
+          vec3 dirFrost = normalize(vec3(0.9, -0.75, 0.4));
+          float rimFrost = pow(max(dot(N, dirFrost), 0.0), 1.9) * deepFresnel;
+          vec3 frostGlow = uColorFrost * rimFrost * 2.4;
 
-          // 3. Violet / Magenta Sheen (Top-Right high angle)
-          vec3 dirViolet = normalize(vec3(0.5, 0.85, -0.3));
-          float rimViolet = pow(max(dot(N, dirViolet), 0.0), 2.6) * deepFresnel;
-          vec3 violetGlow = uColorViolet * rimViolet * 2.0;
+          // 3. Warm Cream Alabaster Sheen (#FCF8D8) on high angle
+          vec3 dirCream = normalize(vec3(0.5, 0.85, -0.3));
+          float rimCream = pow(max(dot(N, dirCream), 0.0), 2.6) * deepFresnel;
+          vec3 creamGlow = uColorCream * rimCream * 2.1;
 
-          // 4. Cyan Glint (Precise razor edge)
-          vec3 dirCyan = normalize(vec3(-0.3, -0.9, 0.6));
-          float rimCyan = pow(max(dot(N, dirCyan), 0.0), 3.2) * fresnel;
-          vec3 cyanGlow = uColorCyan * rimCyan * 1.8;
+          // 4. Frosted Ash edge (#ADACA7)
+          vec3 dirAsh = normalize(vec3(-0.3, -0.9, 0.6));
+          float rimAsh = pow(max(dot(N, dirAsh), 0.0), 3.2) * fresnel;
+          vec3 ashGlow = uColorAsh * rimAsh * 1.6;
 
-          // Glossy specular highlight
-          vec3 H1 = normalize(dirOrange + V);
+          // Specular highlights
+          vec3 H1 = normalize(dirAmber + V);
           float spec1 = pow(max(dot(N, H1), 0.0), 64.0);
 
-          vec3 H2 = normalize(dirBlue + V);
+          vec3 H2 = normalize(dirFrost + V);
           float spec2 = pow(max(dot(N, H2), 0.0), 40.0);
 
-          // Base obsidian deep liquid body
-          vec3 baseBlack = vec3(0.012, 0.014, 0.02);
+          // Base mineral graphite liquid body
+          vec3 baseSlate = vec3(0.02, 0.022, 0.024);
           
-          // Internal translucent refractive glow
+          // Internal translucent frosted core
           float internalScatter = (1.0 - NdotV) * 0.12;
-          vec3 scatterColor = mix(uColorViolet, uColorBlue, 0.5) * internalScatter;
+          vec3 scatterColor = mix(uColorCream, uColorFrost, 0.5) * internalScatter;
 
-          // Composite colors
-          vec3 finalColor = baseBlack 
+          // Composite
+          vec3 finalColor = baseSlate 
                           + scatterColor 
-                          + orangeGlow 
-                          + blueGlow 
-                          + violetGlow 
-                          + cyanGlow 
-                          + (spec1 * vec3(1.0, 0.78, 0.5) * 1.6)
-                          + (spec2 * vec3(0.5, 0.85, 1.0) * 1.2);
+                          + amberGlow 
+                          + frostGlow 
+                          + creamGlow 
+                          + ashGlow 
+                          + (spec1 * vec3(1.0, 0.95, 0.8) * 1.8)
+                          + (spec2 * vec3(0.85, 0.9, 1.0) * 1.3);
 
-          // Alpha edge feathering for liquid glass illusion
           float alpha = clamp(0.72 + fresnel * 0.28, 0.0, 1.0);
-
           gl_FragColor = vec4(finalColor, alpha);
         }
       `;
@@ -249,10 +242,10 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         uNoiseDensity: { value: 0.75 },
         uNoiseStrength: { value: 0.45 * intensity },
         uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorOrange: { value: new THREE.Color('#ff6b2c') }, // Vivid radiant orange
-        uColorBlue: { value: new THREE.Color('#2563eb') },   // Electric cobalt blue
-        uColorViolet: { value: new THREE.Color('#9333ea') }, // Violet / orchid
-        uColorCyan: { value: new THREE.Color('#06b6d4') },   // Cyan glint
+        uColorAmber: { value: new THREE.Color('#DD700B') }, // Frozen Mist - Burnished Amber
+        uColorFrost: { value: new THREE.Color('#D9DADF') }, // Frozen Mist - Pale Frost
+        uColorCream: { value: new THREE.Color('#FCF8D8') }, // Frozen Mist - Warm Cream
+        uColorAsh: { value: new THREE.Color('#ADACA7') },   // Frozen Mist - Frosted Ash
       };
 
       const materialMain = new THREE.ShaderMaterial({
@@ -268,7 +261,7 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       meshMain.position.set(0.65, 0.15, 0.0);
       scene.add(meshMain);
 
-      // --- Satellite Droplet (inspired by Image 2's secondary floating droplet) ---
+      // --- Satellite Droplet ---
       const geometrySatellite = new THREE.IcosahedronGeometry(1.2, 48);
       const uniformsSat = {
         uTime: { value: 1.5 },
@@ -276,10 +269,10 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         uNoiseDensity: { value: 0.95 },
         uNoiseStrength: { value: 0.35 * intensity },
         uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorOrange: { value: new THREE.Color('#ff7836') },
-        uColorBlue: { value: new THREE.Color('#38bdf8') },
-        uColorViolet: { value: new THREE.Color('#a855f7') },
-        uColorCyan: { value: new THREE.Color('#22d3ee') },
+        uColorAmber: { value: new THREE.Color('#DD700B') },
+        uColorFrost: { value: new THREE.Color('#D9DADF') },
+        uColorCream: { value: new THREE.Color('#FCF8D8') },
+        uColorAsh: { value: new THREE.Color('#7C7D75') },
       };
 
       const materialSat = new THREE.ShaderMaterial({
@@ -295,7 +288,7 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       meshSat.position.set(-2.8, -1.2, -0.6);
       scene.add(meshSat);
 
-      // --- Subtle Ambient floating dust/stars particles ---
+      // --- Subtle Ambient floating frost particles ---
       const particlesCount = 70;
       const particleGeo = new THREE.BufferGeometry();
       const posArray = new Float32Array(particlesCount * 3);
@@ -307,9 +300,9 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
       const particleMat = new THREE.PointsMaterial({
         size: 0.04,
-        color: new THREE.Color('#818cf8'),
+        color: new THREE.Color('#D9DADF'),
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.4,
         blending: THREE.AdditiveBlending,
       });
       const particles = new THREE.Points(particleGeo, particleMat);
@@ -329,7 +322,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       window.addEventListener('mousemove', handlePointerMove, { passive: true });
 
-      // Handle Resize
       const handleResize = () => {
         if (!container || !renderer || !camera) return;
         const newW = container.clientWidth;
@@ -349,32 +341,26 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
         const elapsedTime = clock.getElapsedTime();
 
-        // Smooth mouse lerping
         mouse.x += (mouse.targetX - mouse.x) * 0.04;
         mouse.y += (mouse.targetY - mouse.y) * 0.04;
 
-        // Update uniforms
         uniformsMain.uTime.value = elapsedTime;
         uniformsMain.uMouse.value.set(mouse.x, mouse.y);
 
         uniformsSat.uTime.value = elapsedTime + 2.0;
         uniformsSat.uMouse.value.set(mouse.x, mouse.y);
 
-        // Continuous subtle rotation
         meshMain.rotation.x = Math.sin(elapsedTime * 0.15) * 0.2 + mouse.y * 0.3;
         meshMain.rotation.y = elapsedTime * 0.12 + mouse.x * 0.35;
         meshMain.position.y = 0.15 + Math.sin(elapsedTime * 0.4) * 0.18;
 
-        // Orbit satellite
         meshSat.rotation.x = elapsedTime * 0.18;
         meshSat.rotation.y = -elapsedTime * 0.15;
         meshSat.position.x = -2.8 + Math.cos(elapsedTime * 0.3) * 0.4 + mouse.x * 0.25;
         meshSat.position.y = -1.2 + Math.sin(elapsedTime * 0.35) * 0.3 + mouse.y * 0.2;
 
-        // Drift particles
         particles.rotation.y = elapsedTime * 0.015;
 
-        // Camera parallax response
         if (camera) {
           camera.position.x = mouse.x * 0.45;
           camera.position.y = mouse.y * 0.35;
@@ -416,13 +402,12 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       className={`relative w-full h-full pointer-events-none select-none overflow-hidden ${className}`}
       aria-hidden="true"
     >
-      {/* Graceful Fallback if WebGL is disabled or on reduced-motion devices */}
       {!hasWebGL && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative w-80 h-80 sm:w-96 sm:h-96">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-orange-500/20 via-purple-600/30 to-blue-500/20 blur-3xl animate-pulse" />
-            <div className="absolute inset-4 rounded-full border border-orange-500/30 bg-black/80 backdrop-blur-2xl shadow-[0_0_80px_rgba(255,107,44,0.25)] flex items-center justify-center">
-              <div className="w-48 h-48 rounded-full border border-blue-500/30 bg-gradient-to-br from-purple-900/40 via-black to-blue-900/40 blur-sm" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#DD700B]/20 via-[#D9DADF]/20 to-[#FCF8D8]/20 blur-3xl animate-pulse" />
+            <div className="absolute inset-4 rounded-full border border-[#DD700B]/30 bg-[#0e0f11]/80 backdrop-blur-2xl shadow-[0_0_80px_rgba(221,112,11,0.25)] flex items-center justify-center">
+              <div className="w-48 h-48 rounded-full border border-[#D9DADF]/30 bg-gradient-to-br from-[#7C7D75]/40 via-[#0e0f11] to-[#DD700B]/30 blur-sm" />
             </div>
           </div>
         </div>

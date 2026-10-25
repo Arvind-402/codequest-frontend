@@ -13,7 +13,7 @@ export const AppLayout: React.FC = () => {
   const showSidebar = !isLandingPage && !isSessionPage;
 
   return (
-    <div className="min-h-screen bg-[#030305] text-[#f0f0f5] flex flex-col font-sans selection:bg-[#ff6b2c]/30 selection:text-white">
+    <div className="min-h-screen bg-[#0e0f11] text-[#fcf8d8] flex flex-col font-sans selection:bg-[#dd700b]/30 selection:text-[#fcf8d8]">
       {/* Top Navigation */}
       <Navbar
         onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
@@ -38,18 +38,18 @@ export const AppLayout: React.FC = () => {
 
       {/* Global App Footer for internal dashboard & syllabus pages */}
       {!isLandingPage && !isSessionPage && (
-        <footer className="border-t border-white/[0.06] bg-[#020204] py-8 text-center text-xs text-slate-500 font-mono">
+        <footer className="border-t border-[#d9dadf]/10 bg-[#0a0b0d] py-8 text-center text-xs text-[#adaca7] font-mono">
           <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-300">CODEQUEST PRO</span>
-              <span className="text-slate-600">&bull;</span>
-              <span>Gamified Software Engineering Preparation</span>
+              <span className="font-bold text-[#fcf8d8]">CODEQUEST PRO</span>
+              <span className="text-[#7c7d75]">&bull;</span>
+              <span className="text-[#d9dadf]">Frozen Mist Edition</span>
             </div>
-            <div className="flex items-center gap-4 text-slate-400">
+            <div className="flex items-center gap-4 text-[#adaca7]">
               <span>52 Curated Topics</span>
-              <span className="text-slate-600">&bull;</span>
+              <span className="text-[#7c7d75]">&bull;</span>
               <span>SM-2 Spaced Repetition</span>
-              <span className="text-slate-600">&bull;</span>
+              <span className="text-[#7c7d75]">&bull;</span>
               <span>Zero-Backend Prototype</span>
             </div>
           </div>

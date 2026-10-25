@@ -37,21 +37,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       label: 'Spin Arena',
       icon: Disc,
       badge: 'Signature',
-      badgeColor: 'bg-[#ff6b2c]/15 text-[#ff6b2c] border-[#ff6b2c]/30',
+      badgeColor: 'bg-[#dd700b]/15 text-[#dd700b] border-[#dd700b]/30',
     },
     {
       to: '/topics',
       label: 'Topic Syllabus',
       icon: BookOpen,
       badge: '52 Topics',
-      badgeColor: 'bg-white/5 text-slate-400 border-white/10',
+      badgeColor: 'bg-[#d9dadf]/5 text-[#adaca7] border-[#d9dadf]/15',
     },
     {
       to: '/revision',
       label: 'Revision Hub',
       icon: RotateCcw,
       badge: dueCount > 0 ? `${dueCount} Due` : null,
-      badgeColor: 'bg-[#06b6d4]/15 text-[#06b6d4] border-[#06b6d4]/30 animate-pulse',
+      badgeColor: 'bg-[#d9dadf]/15 text-[#fcf8d8] border-[#d9dadf]/30 animate-pulse',
     },
     {
       to: '/progress',
@@ -68,11 +68,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   ];
 
   const content = (
-    <div className="flex h-full flex-col justify-between bg-[#040407] px-3 py-5 border-r border-white/[0.06]">
+    <div className="flex h-full flex-col justify-between bg-[#121316] px-3 py-5 border-r border-[#d9dadf]/10">
       {/* Top Navigation Links */}
       <div className="space-y-6">
         <div className="px-3 pt-1">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-[#7c7d75]">
             Interview Prep Suite
           </p>
         </div>
@@ -88,8 +88,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 className={({ isActive }) =>
                   `group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-medium tracking-wide transition-all ${
                     isActive
-                      ? 'bg-white/[0.06] text-white border border-white/15 shadow-[0_2px_12px_rgba(0,0,0,0.5)] font-semibold'
-                      : 'text-slate-400 hover:bg-white/[0.02] hover:text-white'
+                      ? 'bg-[#d9dadf]/10 text-[#fcf8d8] border border-[#dd700b]/40 shadow-[0_2px_12px_rgba(0,0,0,0.4)] font-semibold'
+                      : 'text-[#adaca7] hover:bg-white/[0.03] hover:text-[#fcf8d8]'
                   }`
                 }
               >
@@ -113,23 +113,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Bottom: Daily Goal Widget & Quick Action */}
       <div className="space-y-3">
         {/* Daily Mission Progress */}
-        <div className="rounded-2xl border border-white/10 bg-[#07070b] p-3.5 shadow-xl">
+        <div className="rounded-2xl border border-[#d9dadf]/15 bg-[#181a1d] p-3.5 shadow-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
-              <Target className="h-3.5 w-3.5 text-[#ff6b2c]" />
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-[#fcf8d8]">
+              <Target className="h-3.5 w-3.5 text-[#dd700b]" />
               Daily Mission
             </span>
-            <span className="text-[10px] font-mono text-slate-400">
+            <span className="text-[10px] font-mono text-[#adaca7]">
               {todayCompletedCount} / {dailyGoalCount}
             </span>
           </div>
 
-          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-2.5">
+          <div className="h-1.5 w-full bg-[#2a2c30] rounded-full overflow-hidden mb-2.5">
             <div
               className={`h-full transition-all duration-500 ${
                 isDailyGoalMet
-                  ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]'
-                  : 'bg-gradient-to-r from-[#ff6b2c] via-[#8b5cf6] to-[#06b6d4]'
+                  ? 'bg-[#fcf8d8] shadow-[0_0_10px_rgba(252,248,216,0.5)]'
+                  : 'bg-gradient-to-r from-[#dd700b] via-[#adaca7] to-[#d9dadf]'
               }`}
               style={{
                 width: `${Math.min(100, (todayCompletedCount / dailyGoalCount) * 100)}%`,
@@ -137,10 +137,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             />
           </div>
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[#adaca7]">
             {isDailyGoalMet ? (
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Mission accomplished! (+25 XP)
+              <span className="text-[#fcf8d8] font-medium flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-[#dd700b]" /> Mission accomplished! (+25 XP)
               </span>
             ) : (
               <span>Complete {dailyGoalCount - todayCompletedCount} more challenge today.</span>
@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Home Link */}
         <NavLink
           to="/"
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 py-2.5 text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors font-mono"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-[#d9dadf]/15 py-2.5 text-xs text-[#adaca7] hover:text-[#fcf8d8] hover:bg-white/[0.04] transition-colors font-mono"
         >
           <span>Landing Overview</span>
           <ExternalLink className="h-3 w-3" />
