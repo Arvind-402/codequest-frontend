@@ -19,7 +19,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // Check prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
       setHasWebGL(false);
@@ -48,10 +47,9 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(width, height);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
+      renderer.toneMappingExposure = 1.1;
       container.appendChild(renderer.domElement);
 
-      // --- GLSL Simplex Noise Shaders ---
       const vertexShader = `
         uniform float uTime;
         uniform float uSpeed;
@@ -131,21 +129,21 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         void main() {
           float t = uTime * uSpeed;
           
-          vec3 noisePos = position * uNoiseDensity + vec3(t * 0.35, t * 0.28, t * 0.42);
+          vec3 noisePos = position * uNoiseDensity + vec3(t * 0.32, t * 0.25, t * 0.38);
           float n1 = snoise(noisePos);
           float n2 = snoise(noisePos * 2.1 + vec3(t * 0.15)) * 0.5;
           float noise = (n1 + n2) * uNoiseStrength;
 
           float mouseDist = length(position.xy - uMouse * 2.0);
-          float mousePush = smoothstep(2.5, 0.0, mouseDist) * 0.25;
+          float mousePush = smoothstep(2.5, 0.0, mouseDist) * 0.22;
 
           vec3 displaced = position + normal * (noise + mousePush);
 
           float eps = 0.015;
           vec3 tx = position + vec3(eps, 0.0, 0.0);
           vec3 ty = position + vec3(0.0, eps, 0.0);
-          float nx = (snoise(tx * uNoiseDensity + vec3(t * 0.35)) + snoise(tx * 2.1 * uNoiseDensity) * 0.5) * uNoiseStrength;
-          float ny = (snoise(ty * uNoiseDensity + vec3(t * 0.35)) + snoise(ty * 2.1 * uNoiseDensity) * 0.5) * uNoiseStrength;
+          float nx = (snoise(tx * uNoiseDensity + vec3(t * 0.32)) + snoise(tx * 2.1 * uNoiseDensity) * 0.5) * uNoiseStrength;
+          float ny = (snoise(ty * uNoiseDensity + vec3(t * 0.32)) + snoise(ty * 2.1 * uNoiseDensity) * 0.5) * uNoiseStrength;
           vec3 displacedTx = tx + normal * nx;
           vec3 displacedTy = ty + normal * ny;
           
@@ -166,10 +164,10 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       const fragmentShader = `
         uniform float uTime;
-        uniform vec3 uColorAmber;
-        uniform vec3 uColorFrost;
-        uniform vec3 uColorCream;
-        uniform vec3 uColorAsh;
+        uniform vec3 uColorTealPrimary;
+        uniform vec3 uColorTealSecondary;
+        uniform vec3 uColorTealDeep;
+        uniform vec3 uColorHighlight;
 
         varying vec3 vNormal;
         varying vec3 vViewPosition;
@@ -181,71 +179,54 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
           vec3 N = normalize(vNormal);
 
           float NdotV = max(dot(N, V), 0.0);
-          float fresnel = pow(1.0 - NdotV, 3.0);
-          float deepFresnel = pow(1.0 - NdotV, 1.8);
+          float fresnel = pow(1.0 - NdotV, 3.2);
+          float deepFresnel = pow(1.0 - NdotV, 1.9);
 
-          // Frozen Mist Lighting Model
-          // 1. Burnished Amber Rim (#DD700B) on upper crest
-          vec3 dirAmber = normalize(vec3(-0.85, 0.8, 0.35));
-          float rimAmber = pow(max(dot(N, dirAmber), 0.0), 2.2) * deepFresnel;
-          vec3 amberGlow = uColorAmber * rimAmber * 2.9;
+          // 1. Primary Teal Rim (#367D8A) along upper crest
+          vec3 dirPrimary = normalize(vec3(-0.85, 0.8, 0.4));
+          float rimPrimary = pow(max(dot(N, dirPrimary), 0.0), 2.2) * deepFresnel;
+          vec3 primaryGlow = uColorTealPrimary * rimPrimary * 3.2;
 
-          // 2. Pale Frost Mist Rim (#D9DADF) on lower-right
-          vec3 dirFrost = normalize(vec3(0.9, -0.75, 0.4));
-          float rimFrost = pow(max(dot(N, dirFrost), 0.0), 1.9) * deepFresnel;
-          vec3 frostGlow = uColorFrost * rimFrost * 2.4;
+          // 2. Secondary Teal Rim (#285F6B) along lower underbelly
+          vec3 dirSecondary = normalize(vec3(0.9, -0.7, 0.45));
+          float rimSecondary = pow(max(dot(N, dirSecondary), 0.0), 1.9) * deepFresnel;
+          vec3 secondaryGlow = uColorTealSecondary * rimSecondary * 2.6;
 
-          // 3. Warm Cream Alabaster Sheen (#FCF8D8) on high angle
-          vec3 dirCream = normalize(vec3(0.5, 0.85, -0.3));
-          float rimCream = pow(max(dot(N, dirCream), 0.0), 2.6) * deepFresnel;
-          vec3 creamGlow = uColorCream * rimCream * 2.1;
+          // 3. Deep Teal Scatter (#133336)
+          float internalScatter = (1.0 - NdotV) * 0.22;
+          vec3 deepGlow = uColorTealDeep * internalScatter * 2.0;
 
-          // 4. Frosted Ash edge (#ADACA7)
-          vec3 dirAsh = normalize(vec3(-0.3, -0.9, 0.6));
-          float rimAsh = pow(max(dot(N, dirAsh), 0.0), 3.2) * fresnel;
-          vec3 ashGlow = uColorAsh * rimAsh * 1.6;
+          // 4. Razor White Highlight (#FFFFFF)
+          vec3 H = normalize(dirPrimary + V);
+          float spec = pow(max(dot(N, H), 0.0), 72.0);
+          vec3 specHighlight = uColorHighlight * spec * 2.0;
 
-          // Specular highlights
-          vec3 H1 = normalize(dirAmber + V);
-          float spec1 = pow(max(dot(N, H1), 0.0), 64.0);
+          // Base near-black void body
+          vec3 baseBlack = vec3(0.005, 0.007, 0.009);
 
-          vec3 H2 = normalize(dirFrost + V);
-          float spec2 = pow(max(dot(N, H2), 0.0), 40.0);
+          vec3 finalColor = baseBlack 
+                          + deepGlow 
+                          + secondaryGlow 
+                          + primaryGlow 
+                          + specHighlight;
 
-          // Base mineral graphite liquid body
-          vec3 baseSlate = vec3(0.02, 0.022, 0.024);
-          
-          // Internal translucent frosted core
-          float internalScatter = (1.0 - NdotV) * 0.12;
-          vec3 scatterColor = mix(uColorCream, uColorFrost, 0.5) * internalScatter;
-
-          // Composite
-          vec3 finalColor = baseSlate 
-                          + scatterColor 
-                          + amberGlow 
-                          + frostGlow 
-                          + creamGlow 
-                          + ashGlow 
-                          + (spec1 * vec3(1.0, 0.95, 0.8) * 1.8)
-                          + (spec2 * vec3(0.85, 0.9, 1.0) * 1.3);
-
-          float alpha = clamp(0.72 + fresnel * 0.28, 0.0, 1.0);
+          float alpha = clamp(0.7 + fresnel * 0.3, 0.0, 1.0);
           gl_FragColor = vec4(finalColor, alpha);
         }
       `;
 
-      // Geometry: High resolution Icosahedron for smooth fluid tessellation
+      // Geometry: High resolution Icosahedron for smooth liquid surface
       const geometryMain = new THREE.IcosahedronGeometry(2.35, 64);
       const uniformsMain = {
         uTime: { value: 0 },
-        uSpeed: { value: 0.38 },
+        uSpeed: { value: 0.35 },
         uNoiseDensity: { value: 0.75 },
-        uNoiseStrength: { value: 0.45 * intensity },
+        uNoiseStrength: { value: 0.42 * intensity },
         uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorAmber: { value: new THREE.Color('#DD700B') }, // Frozen Mist - Burnished Amber
-        uColorFrost: { value: new THREE.Color('#D9DADF') }, // Frozen Mist - Pale Frost
-        uColorCream: { value: new THREE.Color('#FCF8D8') }, // Frozen Mist - Warm Cream
-        uColorAsh: { value: new THREE.Color('#ADACA7') },   // Frozen Mist - Frosted Ash
+        uColorTealPrimary: { value: new THREE.Color('#367D8A') },   // Primary Teal
+        uColorTealSecondary: { value: new THREE.Color('#285F6B') }, // Secondary Teal
+        uColorTealDeep: { value: new THREE.Color('#133336') },      // Deep Teal
+        uColorHighlight: { value: new THREE.Color('#FFFFFF') },     // Crisp White
       };
 
       const materialMain = new THREE.ShaderMaterial({
@@ -261,18 +242,18 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       meshMain.position.set(0.65, 0.15, 0.0);
       scene.add(meshMain);
 
-      // --- Satellite Droplet ---
+      // Satellite Droplet
       const geometrySatellite = new THREE.IcosahedronGeometry(1.2, 48);
       const uniformsSat = {
         uTime: { value: 1.5 },
-        uSpeed: { value: 0.45 },
+        uSpeed: { value: 0.42 },
         uNoiseDensity: { value: 0.95 },
-        uNoiseStrength: { value: 0.35 * intensity },
+        uNoiseStrength: { value: 0.32 * intensity },
         uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorAmber: { value: new THREE.Color('#DD700B') },
-        uColorFrost: { value: new THREE.Color('#D9DADF') },
-        uColorCream: { value: new THREE.Color('#FCF8D8') },
-        uColorAsh: { value: new THREE.Color('#7C7D75') },
+        uColorTealPrimary: { value: new THREE.Color('#367D8A') },
+        uColorTealSecondary: { value: new THREE.Color('#285F6B') },
+        uColorTealDeep: { value: new THREE.Color('#133336') },
+        uColorHighlight: { value: new THREE.Color('#FFFFFF') },
       };
 
       const materialSat = new THREE.ShaderMaterial({
@@ -288,8 +269,8 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       meshSat.position.set(-2.8, -1.2, -0.6);
       scene.add(meshSat);
 
-      // --- Subtle Ambient floating frost particles ---
-      const particlesCount = 70;
+      // Ambient teal dust/spores particles
+      const particlesCount = 75;
       const particleGeo = new THREE.BufferGeometry();
       const posArray = new Float32Array(particlesCount * 3);
       for (let i = 0; i < particlesCount * 3; i += 3) {
@@ -299,16 +280,16 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       }
       particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
       const particleMat = new THREE.PointsMaterial({
-        size: 0.04,
-        color: new THREE.Color('#D9DADF'),
+        size: 0.035,
+        color: new THREE.Color('#367D8A'),
         transparent: true,
-        opacity: 0.4,
+        opacity: 0.35,
         blending: THREE.AdditiveBlending,
       });
       const particles = new THREE.Points(particleGeo, particleMat);
       scene.add(particles);
 
-      // --- Pointer Tracking & Smooth Parallax ---
+      // Pointer tracking & smooth parallax
       const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
       const handlePointerMove = (e: MouseEvent) => {
@@ -333,7 +314,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       window.addEventListener('resize', handleResize);
 
-      // --- Animation Loop ---
       const clock = new THREE.Clock();
 
       const animate = () => {
@@ -350,20 +330,20 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         uniformsSat.uTime.value = elapsedTime + 2.0;
         uniformsSat.uMouse.value.set(mouse.x, mouse.y);
 
-        meshMain.rotation.x = Math.sin(elapsedTime * 0.15) * 0.2 + mouse.y * 0.3;
-        meshMain.rotation.y = elapsedTime * 0.12 + mouse.x * 0.35;
-        meshMain.position.y = 0.15 + Math.sin(elapsedTime * 0.4) * 0.18;
+        meshMain.rotation.x = Math.sin(elapsedTime * 0.15) * 0.18 + mouse.y * 0.28;
+        meshMain.rotation.y = elapsedTime * 0.11 + mouse.x * 0.32;
+        meshMain.position.y = 0.15 + Math.sin(elapsedTime * 0.38) * 0.16;
 
-        meshSat.rotation.x = elapsedTime * 0.18;
-        meshSat.rotation.y = -elapsedTime * 0.15;
-        meshSat.position.x = -2.8 + Math.cos(elapsedTime * 0.3) * 0.4 + mouse.x * 0.25;
-        meshSat.position.y = -1.2 + Math.sin(elapsedTime * 0.35) * 0.3 + mouse.y * 0.2;
+        meshSat.rotation.x = elapsedTime * 0.16;
+        meshSat.rotation.y = -elapsedTime * 0.14;
+        meshSat.position.x = -2.8 + Math.cos(elapsedTime * 0.28) * 0.35 + mouse.x * 0.22;
+        meshSat.position.y = -1.2 + Math.sin(elapsedTime * 0.32) * 0.25 + mouse.y * 0.18;
 
-        particles.rotation.y = elapsedTime * 0.015;
+        particles.rotation.y = elapsedTime * 0.012;
 
         if (camera) {
-          camera.position.x = mouse.x * 0.45;
-          camera.position.y = mouse.y * 0.35;
+          camera.position.x = mouse.x * 0.4;
+          camera.position.y = mouse.y * 0.3;
           camera.lookAt(0, 0, 0);
         }
 
@@ -405,9 +385,9 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       {!hasWebGL && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative w-80 h-80 sm:w-96 sm:h-96">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#DD700B]/20 via-[#D9DADF]/20 to-[#FCF8D8]/20 blur-3xl animate-pulse" />
-            <div className="absolute inset-4 rounded-full border border-[#DD700B]/30 bg-[#0e0f11]/80 backdrop-blur-2xl shadow-[0_0_80px_rgba(221,112,11,0.25)] flex items-center justify-center">
-              <div className="w-48 h-48 rounded-full border border-[#D9DADF]/30 bg-gradient-to-br from-[#7C7D75]/40 via-[#0e0f11] to-[#DD700B]/30 blur-sm" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#133336]/40 via-[#285F6B]/30 to-[#367D8A]/20 blur-3xl animate-pulse" />
+            <div className="absolute inset-4 rounded-full border border-[#367D8A]/30 bg-[#010001]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(54,125,138,0.25)] flex items-center justify-center">
+              <div className="w-48 h-48 rounded-full border border-[#285F6B]/30 bg-gradient-to-br from-[#133336] via-[#010001] to-[#367D8A]/30 blur-sm" />
             </div>
           </div>
         </div>

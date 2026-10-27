@@ -1,61 +1,56 @@
 ﻿@import "tailwindcss";
 
 /* ============================================================
-   CODEQUEST — FROZEN MIST CINEMATIC DESIGN SYSTEM
-   Palette Scheme 11: Frozen Mist
-   #7C7D75 (Mineral Slate Gray)
-   #ADACA7 (Cool Frosted Ash)
-   #FCF8D8 (Warm Pale Cream / Alabaster)
-   #D9DADF (Pale Frost Mist / Ice)
-   #DD700B (Burnished Amber / Vibrant Ochre)
+   CODEQUEST — NICHE BOTANICAL TEAL & OBSIDIAN DESIGN SYSTEM
+   Exact Palette:
+   - Background:   #010001
+   - Primary Text: #FFFFFF
+   - Primary Teal: #367D8A
+   - Secondary Teal: #285F6B
+   - Deep Teal:    #133336
    ============================================================ */
 
 @layer base {
   :root {
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     --font-mono: 'JetBrains Mono', monospace;
-    --font-display: 'Inter', sans-serif;
 
-    /* Frozen Mist Atmospheric Dark Palette */
-    --bg-void: #0e0f11;
-    --bg-app: #121316;
-    --bg-surface: #181a1d;
-    --bg-card: #1f2126;
-    --bg-card-hover: #272a30;
-    --bg-elevated: #2f333a;
-    --border-subtle: rgba(217, 218, 223, 0.1);
-    --border-accent: rgba(221, 112, 11, 0.35);
+    /* Core Palette Tokens */
+    --bg-void: #010001;
+    --bg-app: #030809;
+    --bg-surface: #071315;
+    --bg-card: #0c1c1f;
+    --bg-card-hover: #112529;
+    --bg-elevated: #162f33;
 
-    /* Frozen Mist Signature Accents */
-    --accent-orange: #dd700b;
-    --accent-cream: #fcf8d8;
-    --accent-frost: #d9dadf;
-    --accent-ash: #adaca7;
-    --accent-slate: #7c7d75;
-
-    /* Glow Intensities */
-    --glow-orange: rgba(221, 112, 11, 0.22);
-    --glow-cream: rgba(252, 248, 216, 0.15);
-    --glow-frost: rgba(217, 218, 223, 0.18);
+    /* Core Teal System */
+    --teal-primary: #367d8a;
+    --teal-secondary: #285f6b;
+    --teal-deep: #133336;
+    --teal-glow: rgba(54, 125, 138, 0.28);
+    --teal-border: rgba(54, 125, 138, 0.22);
+    --teal-border-bright: rgba(54, 125, 138, 0.55);
 
     /* Typography */
-    --text-primary: #fcf8d8;
-    --text-secondary: #d9dadf;
-    --text-muted: #adaca7;
-    --text-slate: #7c7d75;
+    --text-primary: #ffffff;
+    --text-secondary: #d6e2e4;
+    --text-muted: #8aa4a8;
+    --text-deep: #4d686c;
   }
 
   * {
-    border-color: var(--border-subtle);
+    border-color: var(--teal-border);
   }
 
   html {
     scroll-behavior: smooth;
+    background-color: var(--bg-void);
   }
 
   body {
     background-color: var(--bg-void);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-family: var(--font-sans);
     margin: 0;
     padding: 0;
@@ -70,100 +65,93 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    background-color: var(--bg-void);
   }
 
-  /* Cinematic Scrollbars */
+  /* Custom Teal Scrollbar */
   ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--bg-void);
+    background: #010001;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(173, 172, 167, 0.25);
+    background: #133336;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(221, 112, 11, 0.5);
+    background: #367d8a;
   }
 }
 
 /* ============================================================
-   TYPOGRAPHY GRADIENTS
+   EDITORIAL TYPOGRAPHY CLASSES
    ============================================================ */
 
-.text-gradient-frozen {
-  background: linear-gradient(135deg, #fcf8d8 0%, #d9dadf 50%, #adaca7 100%);
+.font-editorial {
+  font-family: var(--font-serif);
+}
+
+.text-gradient-teal {
+  background: linear-gradient(135deg, #ffffff 0%, #367d8a 70%, #285f6b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.text-gradient-amber {
-  background: linear-gradient(135deg, #fcf8d8 0%, #dd700b 60%, #b85806 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.text-gradient-mist {
-  background: linear-gradient(135deg, #ffffff 0%, #d9dadf 40%, #7c7d75 100%);
+.text-gradient-white {
+  background: linear-gradient(180deg, #ffffff 30%, #8aa4a8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 /* ============================================================
-   GLOW & CARD EFFECTS
+   CARDS & GLOW EFFECTS
    ============================================================ */
 
-.glow-amber {
-  box-shadow: 0 0 35px -5px rgba(221, 112, 11, 0.35);
+.teal-card {
+  background: #0c1c1f;
+  border: 1px solid rgba(54, 125, 138, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glow-frost {
-  box-shadow: 0 0 35px -5px rgba(217, 218, 223, 0.25);
+.teal-card:hover {
+  background: #112529;
+  border-color: rgba(54, 125, 138, 0.45);
+  box-shadow: 0 12px 36px -8px rgba(19, 51, 54, 0.6);
 }
 
-.glass-frozen {
-  background: rgba(24, 26, 29, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(217, 218, 223, 0.12);
+.glow-teal-sm {
+  box-shadow: 0 0 20px -3px rgba(54, 125, 138, 0.35);
 }
 
-.glass-frozen-hover {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.glass-frozen-hover:hover {
-  background: rgba(39, 42, 48, 0.95);
-  border-color: rgba(221, 112, 11, 0.35);
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
+.glow-teal-lg {
+  box-shadow: 0 0 45px -5px rgba(54, 125, 138, 0.3);
 }
 
-/* Hero Ambient Light Fields */
-.ambient-orb-amber {
-  position: absolute;
-  width: 550px;
-  height: 550px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(221, 112, 11, 0.12) 0%, transparent 70%);
-  filter: blur(90px);
-  pointer-events: none;
-}
-
-.ambient-orb-frost {
+/* Ambient organic glow fields */
+.ambient-teal-primary {
   position: absolute;
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(217, 218, 223, 0.08) 0%, transparent 70%);
-  filter: blur(110px);
+  background: radial-gradient(circle, rgba(54, 125, 138, 0.14) 0%, rgba(19, 51, 54, 0.04) 50%, transparent 70%);
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+.ambient-teal-deep {
+  position: absolute;
+  width: 750px;
+  height: 750px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(19, 51, 54, 0.2) 0%, rgba(1, 0, 1, 0) 70%);
+  filter: blur(120px);
   pointer-events: none;
 }
 

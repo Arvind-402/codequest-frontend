@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RotateCw,
@@ -18,7 +18,7 @@ import { TOPICS } from '../../data/topics';
 import type { Topic, Category, Difficulty } from '../../types/topic';
 import { useCodeQuest } from '../../context/CodeQuestContext';
 import { getTodayDateString } from '../../utils/date';
-import { startWheelSpinSound } from '../../utils/audio';
+import { playRouletteAudio } from '../../utils/audio';
 
 interface SpinningWheelProps {
   onSelectTopic?: (topic: Topic) => void;
@@ -35,16 +35,38 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | 'All'>('All');
   const [onlyDueRevisions, setOnlyDueRevisions] = useState<boolean>(false);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+
+  // Sound preference with localStorage persistence
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('codequest_sound') !== 'false';
+    }
+    return true;
+  });
+
   const cancelAudioRef = useRef<(() => void) | null>(null);
 
-  React.useEffect(() => {
+  const toggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('codequest_sound', String(next));
+      }
+      if (!next) {
+        cancelAudioRef.current?.();
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
     return () => {
       cancelAudioRef.current?.();
     };
   }, []);
 
-  // Wheel Animation State
+  // Wheel Animation State (6.8s authentic roulette duration sync)
+  const SPIN_DURATION_MS = 6800;
   const [rotation, setRotation] = useState<number>(0);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
@@ -61,17 +83,14 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
   // Filtered eligible topics for discovery mode
   const eligibleTopics = useMemo(() => {
     return TOPICS.filter((t) => {
-      // Category filter
       if (selectedCategories.length > 0) {
         const matchesCategory = selectedCategories.includes(t.category) ||
           (t.category === 'PROGRAMMING' && selectedCategories.includes('OOPS'));
         if (!matchesCategory) return false;
       }
-      // Difficulty filter
       if (selectedDifficulty !== 'All' && t.difficulty !== selectedDifficulty) {
         return false;
       }
-      // Due revision filter
       if (onlyDueRevisions) {
         const sched = revisionSchedule[t.id];
         if (!sched || sched.nextReviewDate > todayStr) {
@@ -82,7 +101,6 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
     });
   }, [selectedCategories, selectedDifficulty, onlyDueRevisions, revisionSchedule, todayStr]);
 
-  // Toggle category in filter
   const toggleCategory = (cat: Category) => {
     if (isSpinning) return;
     setSelectedCategories((prev) =>
@@ -90,111 +108,115 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
     );
   };
 
-  // Helper to map topic category to wheel segment index
   const getCategoryIndex = (cat: Category): number => {
-    if (cat === 'PROGRAMMING') return 1; // Map programming to OOPS segment
+    if (cat === 'PROGRAMMING') return 1;
     const idx = WHEEL_CATEGORIES.findIndex((wc) => wc.category === cat);
     return idx >= 0 ? idx : 0;
   };
 
-  // Spin the wheel with real deceleration physics
+  // Spin with authentic roulette sound and deceleration
   const handleSpin = () => {
     if (isSpinning || eligibleTopics.length === 0) return;
 
+    // Start roulette MP3 sound immediately on user gesture
     if (soundEnabled) {
       cancelAudioRef.current?.();
-      cancelAudioRef.current = startWheelSpinSound(4200);
+      cancelAudioRef.current = playRouletteAudio();
     }
 
     setIsSpinning(true);
     setShowResultCard(false);
 
-    // Pick random topic from eligible pool
     const randomTopic = eligibleTopics[Math.floor(Math.random() * eligibleTopics.length)];
     const targetCategoryIndex = getCategoryIndex(randomTopic.category);
 
     // Compute exact rotation to land on target slice at 12 o'clock pointer
-    const nextRotation = calculateRotationToCategory(targetCategoryIndex, rotation, 8, 6);
+    const nextRotation = calculateRotationToCategory(targetCategoryIndex, rotation, 8, 7);
     setRotation(nextRotation);
 
-    // Wait for the CSS cubic-bezier transition to complete (4.2 seconds)
+    // Synchronize completion with roulette sound duration (~6.8s)
     setTimeout(() => {
+      cancelAudioRef.current?.();
       setIsSpinning(false);
       setSelectedTopic(randomTopic);
       setShowResultCard(true);
       if (onSelectTopic) onSelectTopic(randomTopic);
 
-      // Trigger celebratory confetti
+      // Elegant teal-themed celebration
       confetti({
-        particleCount: 50,
-        spread: 60,
+        particleCount: 55,
+        spread: 65,
         origin: { y: 0.65 },
-        colors: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'],
+        colors: ['#367D8A', '#FFFFFF', '#285F6B', '#133336', '#5DA8B6'],
       });
-    }, 4200);
+    }, SPIN_DURATION_MS);
   };
 
-  // Daily Challenge Direct Launch or Spin
+  // Daily Challenge Spin
   const handleSpinForDaily = () => {
     if (!dailyTopic || isSpinning) return;
 
     if (soundEnabled) {
       cancelAudioRef.current?.();
-      cancelAudioRef.current = startWheelSpinSound(3800);
+      cancelAudioRef.current = playRouletteAudio();
     }
 
     setIsSpinning(true);
     setShowResultCard(false);
 
     const targetIndex = getCategoryIndex(dailyTopic.category);
-    const nextRotation = calculateRotationToCategory(targetIndex, rotation, 8, 5);
+    const nextRotation = calculateRotationToCategory(targetIndex, rotation, 8, 7);
     setRotation(nextRotation);
 
     setTimeout(() => {
+      cancelAudioRef.current?.();
       setIsSpinning(false);
       setSelectedTopic(dailyTopic);
       setShowResultCard(true);
 
       confetti({
-        particleCount: 70,
-        spread: 70,
+        particleCount: 65,
+        spread: 75,
         origin: { y: 0.65 },
-        colors: ['#f59e0b', '#8b5cf6', '#10b981'],
+        colors: ['#367D8A', '#FFFFFF', '#285F6B', '#5DA8B6'],
       });
-    }, 3800);
+    }, SPIN_DURATION_MS);
   };
 
   // Slices geometry
   const numSlices = WHEEL_CATEGORIES.length;
-  const sliceAngle = 360 / numSlices; // 45 degrees
+  const sliceAngle = 360 / numSlices;
   const radius = 210;
   const centerX = 250;
   const centerY = 250;
 
   return (
     <div className="space-y-8">
-      {/* Practice Mode Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1e2642] pb-4">
+      {/* Practice Mode Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#133336]/40 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
-              <Compass className="h-6 w-6" />
+          <span className="text-[11px] font-mono tracking-widest uppercase text-[#367D8A]">
+            Curriculum Roulette
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-serif font-light tracking-tight text-white flex items-center gap-2.5 mt-0.5">
+            <span className="p-2 rounded-xl bg-[#133336]/40 text-[#367D8A] border border-[#367D8A]/30">
+              <Compass className="h-5 w-5" />
             </span>
-            Spin Arena
+            <span>Spin Arena</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Test your recall with our unprompted spinning wheel, or follow structured preparation.
+          <p className="text-xs text-white/50 mt-1 max-w-xl">
+            Challenge your memory with our authentic roulette spin, or select a structured syllabus topic to sharpen your engineering foundation.
           </p>
         </div>
 
-        {/* Mode Selector Buttons */}
-        <div className="flex items-center rounded-xl border border-[#1e2642] bg-[#0b0e1b] p-1 text-xs font-semibold">
+        {/* Mode Selector */}
+        <div className="flex items-center rounded-xl border border-[#133336] bg-[#030809] p-1 text-xs font-medium">
           <button
             onClick={() => setPracticeMode('discovery')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 transition-all ${
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 transition-all ${
               practiceMode === 'discovery'
-                ? 'bg-violet-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#367D8A] text-white font-semibold shadow-sm shadow-[#367D8A]/30'
+                : 'text-white/50 hover:text-white'
             }`}
           >
             <RotateCw className="h-3.5 w-3.5" />
@@ -202,10 +224,10 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
           </button>
           <button
             onClick={() => setPracticeMode('daily')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 transition-all ${
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 transition-all ${
               practiceMode === 'daily'
-                ? 'bg-amber-500 text-black shadow-sm font-bold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#285F6B] text-white font-semibold shadow-sm'
+                : 'text-white/50 hover:text-white'
             }`}
           >
             <Calendar className="h-3.5 w-3.5" />
@@ -213,10 +235,10 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
           </button>
           <button
             onClick={() => setPracticeMode('syllabus')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 transition-all ${
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 transition-all ${
               practiceMode === 'syllabus'
-                ? 'bg-cyan-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#133336] text-white font-semibold border border-[#367D8A]/40'
+                : 'text-white/50 hover:text-white'
             }`}
           >
             <Sliders className="h-3.5 w-3.5" />
@@ -228,33 +250,32 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
       {/* DISCOVERY WHEEL MODE */}
       {practiceMode === 'discovery' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Wheel Column (Center 7 cols) */}
+          {/* Wheel Column */}
           <div className="lg:col-span-7 flex flex-col items-center justify-center">
             {/* The Wheel Container */}
             <div className="relative w-full max-w-[440px] aspect-square flex items-center justify-center p-4">
-              {/* Outer Glowing Neon Ring */}
-              <div className="absolute inset-2 rounded-full border border-violet-500/20 bg-gradient-to-b from-violet-600/10 to-transparent blur-md pointer-events-none" />
+              {/* Outer Atmospheric Glow */}
+              <div className="absolute inset-2 rounded-full border border-[#367D8A]/20 bg-gradient-to-b from-[#367D8A]/10 via-transparent to-transparent blur-md pointer-events-none" />
 
-              {/* Fixed Top Indicator Pointer (12 o'clock, pointing down) */}
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none animate-pointer-bob">
-                <div className="w-5 h-6 bg-gradient-to-b from-white via-violet-300 to-violet-500 clip-triangle shadow-lg shadow-violet-500/80 drop-shadow-[0_2px_8px_rgba(139,92,246,0.9)]" />
-                <div className="w-2.5 h-2.5 -mt-1 rounded-full bg-violet-400 ring-2 ring-white" />
+              {/* Top Pointer Indicator */}
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none drop-shadow-[0_4px_12px_rgba(54,125,138,0.7)]">
+                <div className="w-5 h-6 bg-gradient-to-b from-white via-[#5DA8B6] to-[#367D8A] clip-triangle shadow-lg" />
+                <div className="w-2.5 h-2.5 -mt-1 rounded-full bg-[#367D8A] ring-2 ring-white" />
               </div>
 
               {/* SVG Spinning Wheel */}
               <svg
                 ref={wheelRef}
                 viewBox="0 0 500 500"
-                className="w-full h-full drop-shadow-2xl select-none"
+                className="w-full h-full drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] select-none"
                 style={{
                   transform: `rotate(${rotation}deg)`,
                   transition: isSpinning
-                    ? 'transform 4.2s cubic-bezier(0.12, 0.8, 0.22, 1)'
+                    ? 'transform 6.8s cubic-bezier(0.12, 0.82, 0.2, 1)'
                     : 'none',
                 }}
               >
                 <defs>
-                  {/* Subtle slice gradients */}
                   {WHEEL_CATEGORIES.map((cat, i) => (
                     <linearGradient
                       key={cat.category}
@@ -269,9 +290,9 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                     </linearGradient>
                   ))}
                   <radialGradient id="center-hub-grad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#1e2642" />
-                    <stop offset="85%" stopColor="#0b0e1b" />
-                    <stop offset="100%" stopColor="#14192d" />
+                    <stop offset="0%" stopColor="#133336" />
+                    <stop offset="80%" stopColor="#061214" />
+                    <stop offset="100%" stopColor="#010001" />
                   </radialGradient>
                 </defs>
 
@@ -280,12 +301,12 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                   cx={centerX}
                   cy={centerY}
                   r={radius + 12}
-                  fill="#0e1324"
-                  stroke="#263156"
-                  strokeWidth="6"
+                  fill="#040a0b"
+                  stroke="#133336"
+                  strokeWidth="5"
                 />
 
-                {/* Outer Rim Studs / Pins */}
+                {/* Outer Rim Pins */}
                 {Array.from({ length: 32 }).map((_, idx) => {
                   const pinAngle = (idx * (360 / 32) * Math.PI) / 180;
                   const pinX = centerX + (radius + 6) * Math.cos(pinAngle);
@@ -296,7 +317,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                       cx={pinX}
                       cy={pinY}
                       r="2.5"
-                      fill={idx % 4 === 0 ? '#c4b5fd' : '#475569'}
+                      fill={idx % 4 === 0 ? '#367D8A' : '#133336'}
                     />
                   );
                 })}
@@ -306,7 +327,6 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                   const startDeg = i * sliceAngle;
                   const endDeg = (i + 1) * sliceAngle;
 
-                  // Convert degrees to standard radians (0 deg = 12 o'clock = -90 deg from 3 o'clock)
                   const startRad = ((startDeg - 90) * Math.PI) / 180;
                   const endRad = ((endDeg - 90) * Math.PI) / 180;
 
@@ -317,27 +337,23 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
 
                   const pathData = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
 
-                  // Center angle for slice label
                   const midDeg = startDeg + sliceAngle / 2;
                   const midRad = ((midDeg - 90) * Math.PI) / 180;
 
-                  // Position label halfway between center and edge
                   const labelRadius = radius * 0.65;
                   const labelX = centerX + labelRadius * Math.cos(midRad);
                   const labelY = centerY + labelRadius * Math.sin(midRad);
 
                   return (
                     <g key={cat.category}>
-                      {/* Wedge Path */}
                       <path
                         d={pathData}
                         fill={`url(#wedge-grad-${i})`}
-                        stroke="#0a0c16"
+                        stroke="#010001"
                         strokeWidth="2.5"
                         className="transition-colors hover:brightness-110"
                       />
 
-                      {/* Text & Icon in Slice */}
                       <g
                         transform={`translate(${labelX}, ${labelY}) rotate(${midDeg + 90})`}
                         className="pointer-events-none"
@@ -346,10 +362,10 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="#ffffff"
-                          fontSize="13"
+                          fontSize="12"
                           fontWeight="700"
-                          letterSpacing="0.4"
-                          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
+                          letterSpacing="0.6"
+                          style={{ textShadow: '0 2px 4px rgba(1,0,1,0.9)' }}
                         >
                           {cat.shortLabel}
                         </text>
@@ -364,15 +380,15 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                   cy={centerY}
                   r="52"
                   fill="url(#center-hub-grad)"
-                  stroke="#3b4873"
-                  strokeWidth="3.5"
+                  stroke="#367D8A"
+                  strokeWidth="3"
                 />
                 <circle
                   cx={centerX}
                   cy={centerY}
                   r="45"
-                  fill="#0b0e1b"
-                  stroke="#8b5cf6"
+                  fill="#010001"
+                  stroke="#285F6B"
                   strokeWidth="1.5"
                   strokeDasharray="4 3"
                 />
@@ -382,88 +398,92 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
               <button
                 onClick={handleSpin}
                 disabled={isSpinning || eligibleTopics.length === 0}
-                className={`absolute z-20 flex h-20 w-20 flex-col items-center justify-center rounded-full text-center transition-all ${
+                className={`absolute z-20 flex h-20 w-20 flex-col items-center justify-center rounded-full text-center transition-all duration-300 ${
                   isSpinning
-                    ? 'cursor-not-allowed bg-slate-800 text-slate-500 scale-95'
+                    ? 'cursor-not-allowed bg-[#061214] text-white/40 border border-[#133336] scale-95'
                     : eligibleTopics.length === 0
-                    ? 'cursor-not-allowed bg-slate-800 text-slate-500'
-                    : 'bg-gradient-to-tr from-violet-600 via-indigo-600 to-violet-500 text-white shadow-xl shadow-violet-600/40 hover:scale-105 active:scale-95 border-2 border-violet-300'
+                    ? 'cursor-not-allowed bg-[#061214] text-white/30 border border-[#133336]'
+                    : 'bg-gradient-to-tr from-[#133336] via-[#285F6B] to-[#367D8A] text-white shadow-xl shadow-[#367D8A]/30 hover:scale-105 active:scale-95 border-2 border-[#5DA8B6]/60'
                 }`}
-                title={eligibleTopics.length === 0 ? 'No topics match current filters' : 'Spin the wheel!'}
+                title={eligibleTopics.length === 0 ? 'No topics match current filters' : 'Spin the roulette wheel!'}
               >
                 <RotateCw className={`h-6 w-6 ${isSpinning ? 'animate-spin' : ''}`} />
-                <span className="text-[11px] font-extrabold uppercase tracking-wider mt-0.5">
-                  {isSpinning ? 'Rolling' : 'SPIN'}
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                  {isSpinning ? 'SPINNING' : 'SPIN'}
                 </span>
               </button>
             </div>
 
-            {/* Quick Status Bar */}
-            <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
+            {/* Quick Status Bar & Sound Controls */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs text-white/50">
               <button
-                  type="button"
-                  onClick={() => setSoundEnabled((prev) => !prev)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono transition-all ${
-                    soundEnabled
-                      ? 'border-violet-500/30 bg-violet-950/30 text-violet-300 hover:bg-violet-900/40'
-                      : 'border-white/10 bg-white/[0.02] text-slate-500 hover:text-slate-300'
-                  }`}
-                  title={soundEnabled ? 'Mute wheel sound' : 'Enable wheel sound'}
-                >
-                  {soundEnabled ? <Volume2 className="h-3.5 w-3.5 text-violet-400" /> : <VolumeX className="h-3.5 w-3.5 text-slate-500" />}
-                  <span>{soundEnabled ? 'Sound ON' : 'Muted'}</span>
-                </button>
-                <span>&bull;</span>
-                <span className="flex items-center gap-1.5 font-medium text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-violet-400 animate-ping" />
-                {eligibleTopics.length} topics available in current pool
+                type="button"
+                onClick={toggleSound}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-mono transition-all ${
+                  soundEnabled
+                    ? 'border-[#367D8A]/50 bg-[#133336]/40 text-[#5DA8B6] hover:bg-[#133336]/60 shadow-[0_0_10px_rgba(54,125,138,0.2)]'
+                    : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70'
+                }`}
+                title={soundEnabled ? 'Mute roulette audio' : 'Enable roulette audio'}
+              >
+                {soundEnabled ? <Volume2 className="h-3.5 w-3.5 text-[#367D8A]" /> : <VolumeX className="h-3.5 w-3.5 text-white/40" />}
+                <span>{soundEnabled ? 'Roulette Sound ON' : 'Audio Muted'}</span>
+              </button>
+
+              <span>&bull;</span>
+
+              <span className="flex items-center gap-1.5 font-medium text-white/70">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#367D8A] animate-ping" />
+                {eligibleTopics.length} topics in active pool
               </span>
-              <span>•</span>
+
+              <span>&bull;</span>
+
               <button
                 onClick={() => {
                   setSelectedCategories([]);
                   setSelectedDifficulty('All');
                   setOnlyDueRevisions(false);
                 }}
-                className="text-violet-400 hover:underline"
+                className="text-[#367D8A] hover:text-[#5DA8B6] transition-colors underline-offset-4 hover:underline"
               >
                 Reset filters
               </button>
             </div>
           </div>
 
-          {/* Controls & Result Column (Right 5 cols) */}
+          {/* Controls & Result Column */}
           <div className="lg:col-span-5 space-y-6">
-            {/* Result Modal / Card (Displays when topic is spun) */}
+            {/* Selected Topic Result Card */}
             {showResultCard && selectedTopic ? (
-              <div className="rounded-2xl border border-violet-500/40 bg-gradient-to-br from-[#151a33] to-[#0f1428] p-5 shadow-2xl shadow-violet-900/30 animate-in fade-in zoom-in-95 duration-300">
+              <div className="rounded-2xl border border-[#367D8A]/50 bg-gradient-to-br from-[#061214] via-[#03090a] to-[#010001] p-6 shadow-2xl shadow-[#367D8A]/20 animate-in fade-in zoom-in-95 duration-400">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 px-2.5 py-0.5 text-xs font-semibold text-violet-300 border border-violet-500/30">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#133336]/60 px-3 py-0.5 text-xs font-semibold text-[#5DA8B6] border border-[#367D8A]/40">
                     <Sparkles className="h-3 w-3" />
                     Topic Selected
                   </span>
-                  <span className="text-xs font-mono text-slate-400 flex items-center gap-1">
+                  <span className="text-xs font-mono text-white/50 flex items-center gap-1">
                     <Clock className="h-3 w-3" /> ~{selectedTopic.estimatedMinutes} mins
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-white mb-2 leading-snug">
+                <h3 className="text-xl font-serif font-normal text-white mb-2 leading-snug">
                   {selectedTopic.title}
                 </h3>
-                <p className="text-xs text-slate-300 mb-4 line-clamp-3">
+                <p className="text-xs text-white/70 mb-4 line-clamp-3 leading-relaxed">
                   {selectedTopic.shortDescription}
                 </p>
 
                 {/* Key Concepts Preview */}
-                <div className="rounded-xl bg-[#090b16] p-3 border border-[#1e2642] mb-4 space-y-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Core Concepts Tested
+                <div className="rounded-xl bg-[#010001] p-3.5 border border-[#133336]/60 mb-5 space-y-1.5">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#367D8A]">
+                    Target Concepts
                   </span>
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {selectedTopic.keyConcepts.slice(0, 3).map((concept, idx) => (
                       <span
                         key={idx}
-                        className="rounded-md bg-[#161c33] px-2 py-0.5 text-[11px] text-slate-300 border border-[#232b4d]"
+                        className="rounded-md bg-[#0a181a] px-2.5 py-0.5 text-[11px] text-white/80 border border-[#133336]"
                       >
                         {concept}
                       </span>
@@ -474,15 +494,15 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate(`/practice/session/${selectedTopic.id}`)}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/30 hover:brightness-110 active:scale-95 transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#285F6B] to-[#367D8A] py-3 text-sm font-semibold text-white shadow-lg shadow-[#367D8A]/20 hover:brightness-110 active:scale-95 transition-all"
                   >
-                    <span>Start Challenge</span>
+                    <span>Enter Practice Arena</span>
                     <ArrowRight className="h-4 w-4" />
                   </button>
                   <button
                     onClick={handleSpin}
                     disabled={isSpinning}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-[#2a355c] bg-[#141a33] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1a2242] transition-colors"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-[#133336] bg-[#061214] px-4 py-3 text-sm font-medium text-white/70 hover:text-white hover:border-[#367D8A]/60 transition-colors"
                   >
                     <RotateCw className="h-4 w-4" />
                     <span>Spin Again</span>
@@ -490,47 +510,47 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-[#232b4d] bg-[#0c1020]/60 p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600/10 text-violet-400 mb-3 border border-violet-500/20">
-                  <RotateCw className={`h-6 w-6 ${isSpinning ? 'animate-spin text-violet-400' : ''}`} />
+              <div className="rounded-2xl border border-dashed border-[#133336] bg-[#03090a]/80 p-7 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#133336]/30 text-[#367D8A] mb-3 border border-[#367D8A]/30">
+                  <RotateCw className={`h-6 w-6 ${isSpinning ? 'animate-spin text-[#5DA8B6]' : ''}`} />
                 </div>
-                <h4 className="text-sm font-bold text-slate-200">
-                  {isSpinning ? 'Selecting matching topic...' : 'Ready to Spin'}
+                <h4 className="text-sm font-medium text-white">
+                  {isSpinning ? 'Roulette ball spinning...' : 'Ready for Next Draw'}
                 </h4>
-                <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto leading-relaxed">
                   {isSpinning
-                    ? 'The wheel pointer will lock precisely onto the chosen topic wedge.'
-                    : 'Configure your category and difficulty filters below, then hit the center SPIN button.'}
+                    ? 'Synchronizing rotation with the casino roulette sequence.'
+                    : 'Select your filters below and click SPIN to initiate the authentic roulette sequence.'}
                 </p>
               </div>
             )}
 
             {/* Filters Control Box */}
-            <div className="rounded-2xl border border-[#1e2642] bg-[#0d1122] p-5 space-y-5">
-              <div className="flex items-center justify-between border-b border-[#1b223d] pb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <Sliders className="h-3.5 w-3.5 text-violet-400" />
-                  Arena Filters
+            <div className="rounded-2xl border border-[#133336]/60 bg-[#040b0d] p-5 space-y-5">
+              <div className="flex items-center justify-between border-b border-[#133336]/40 pb-3">
+                <span className="text-xs font-mono uppercase tracking-wider text-white/80 flex items-center gap-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-[#367D8A]" />
+                  Roulette Filters
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-white/40">
                   {selectedCategories.length === 0 ? 'All Categories' : `${selectedCategories.length} selected`}
                 </span>
               </div>
 
               {/* Difficulty Filter */}
               <div>
-                <label className="text-xs font-semibold text-slate-400 mb-2 block">
-                  Difficulty Level
+                <label className="text-xs font-medium text-white/60 mb-2 block">
+                  Difficulty
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {(['All', 'Beginner', 'Intermediate', 'Advanced'] as const).map((diff) => (
                     <button
                       key={diff}
                       onClick={() => !isSpinning && setSelectedDifficulty(diff)}
-                      className={`rounded-lg py-1.5 text-xs font-medium border transition-all ${
+                      className={`rounded-lg py-1.5 text-xs transition-all ${
                         selectedDifficulty === diff
-                          ? 'bg-violet-600/25 border-violet-500 text-white font-semibold'
-                          : 'border-[#1e2642] bg-[#14192d] text-slate-400 hover:text-slate-200'
+                          ? 'bg-[#367D8A] text-white font-semibold shadow-sm'
+                          : 'border border-[#133336] bg-[#020506] text-white/50 hover:text-white'
                       }`}
                     >
                       {diff}
@@ -541,7 +561,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
 
               {/* Category Toggles */}
               <div>
-                <label className="text-xs font-semibold text-slate-400 mb-2 block">
+                <label className="text-xs font-medium text-white/60 mb-2 block">
                   Categories ({WHEEL_CATEGORIES.length})
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -553,8 +573,8 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                         onClick={() => toggleCategory(cat.category)}
                         className={`flex items-center gap-2 rounded-xl p-2 text-left text-xs border transition-all ${
                           isSelected
-                            ? 'border-violet-500/50 bg-violet-600/20 text-white font-medium shadow-sm'
-                            : 'border-[#1e2642] bg-[#12162a] text-slate-400 hover:text-slate-200'
+                            ? 'border-[#367D8A] bg-[#133336]/40 text-white font-medium shadow-sm'
+                            : 'border-[#133336]/60 bg-[#020506] text-white/50 hover:text-white'
                         }`}
                       >
                         <span
@@ -569,29 +589,29 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
               </div>
 
               {/* Due Revisions Toggle */}
-              <div className="pt-2 border-t border-[#1b223d]">
+              <div className="pt-2 border-t border-[#133336]/40">
                 <label className="flex items-center justify-between cursor-pointer">
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-slate-300">
+                    <span className="text-xs font-medium text-white/80">
                       Include Due Revisions Only
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      Spaced-repetition topics scheduled for today
+                    <span className="text-[11px] text-white/40">
+                      SM-2 algorithm scheduled for today
                     </span>
                   </div>
                   <input
                     type="checkbox"
                     checked={onlyDueRevisions}
                     onChange={(e) => setOnlyDueRevisions(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-violet-600 focus:ring-violet-500"
+                    className="h-4 w-4 rounded border-[#133336] bg-[#020506] text-[#367D8A] focus:ring-[#367D8A]"
                   />
                 </label>
               </div>
 
               {eligibleTopics.length === 0 && (
-                <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 p-3 text-xs text-amber-300 border border-amber-500/20">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>No topics match this combination. Try broadening your filters.</span>
+                <div className="flex items-center gap-2 rounded-xl bg-[#133336]/40 p-3 text-xs text-[#5DA8B6] border border-[#367D8A]/30">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-[#367D8A]" />
+                  <span>No topics match this filter combination. Try resetting filters.</span>
                 </div>
               )}
             </div>
@@ -602,32 +622,32 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
       {/* DAILY CHALLENGE MODE */}
       {practiceMode === 'daily' && dailyTopic && (
         <div className="max-w-3xl mx-auto space-y-6">
-          <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#1a1727] via-[#121424] to-[#0c0e1b] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="rounded-3xl border border-[#367D8A]/40 bg-gradient-to-b from-[#061214] via-[#03090a] to-[#010001] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#367D8A]/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="flex items-center justify-between mb-4">
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-300 border border-amber-500/30">
-                <Calendar className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#133336]/60 px-3 py-1 text-xs font-semibold text-[#5DA8B6] border border-[#367D8A]/30">
+                <Calendar className="h-3.5 w-3.5 text-[#367D8A]" />
                 Daily Deterministic Challenge — {todayStr}
               </span>
-              <span className="rounded-md bg-[#1a223e] px-2.5 py-1 text-xs font-semibold text-slate-300 border border-[#2b3760]">
+              <span className="rounded-md bg-[#0a181a] px-2.5 py-1 text-xs font-mono text-white/70 border border-[#133336]">
                 {dailyTopic.category}
               </span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+            <h2 className="text-2xl sm:text-3xl font-serif font-light text-white mb-3">
               {dailyTopic.title}
             </h2>
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+
+            <p className="text-sm text-white/60 mb-6 leading-relaxed">
               {dailyTopic.shortDescription}
             </p>
 
-            {/* Question Card */}
-            <div className="rounded-2xl border border-[#222c4d] bg-[#0a0d18] p-5 mb-6">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400 block mb-1">
-                Today’s Technical Interview Question
+            <div className="rounded-2xl border border-[#133336] bg-[#010001] p-5 mb-6">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#367D8A] block mb-1.5">
+                Today's Interview Prompt
               </span>
-              <p className="text-sm sm:text-base font-semibold text-slate-100">
+              <p className="text-sm sm:text-base font-normal text-white">
                 "{dailyTopic.interviewQuestion}"
               </p>
             </div>
@@ -635,7 +655,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
             <div className="flex flex-wrap items-center gap-4">
               <button
                 onClick={() => navigate(`/practice/session/${dailyTopic.id}`)}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-95 transition-all"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#285F6B] to-[#367D8A] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#367D8A]/20 hover:brightness-110 active:scale-95 transition-all"
               >
                 <span>Accept Today's Challenge</span>
                 <ArrowRight className="h-4 w-4" />
@@ -644,9 +664,9 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
               <button
                 onClick={handleSpinForDaily}
                 disabled={isSpinning}
-                className="flex items-center gap-2 rounded-xl border border-[#2a355c] bg-[#141a33] px-5 py-3 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                className="flex items-center gap-2 rounded-xl border border-[#133336] bg-[#061214] px-5 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors"
               >
-                <RotateCw className={`h-4 w-4 ${isSpinning ? 'animate-spin text-amber-400' : ''}`} />
+                <RotateCw className={`h-4 w-4 ${isSpinning ? 'animate-spin text-[#367D8A]' : ''}`} />
                 <span>Spin Wheel for Today</span>
               </button>
             </div>
@@ -657,11 +677,11 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
       {/* STRUCTURED SYLLABUS MODE */}
       {practiceMode === 'syllabus' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">
-              Browse topics directly by curriculum category. Start any challenge without spinning.
+          <div className="flex items-center justify-between border-b border-[#133336]/40 pb-3">
+            <p className="text-xs text-white/50">
+              Browse all curriculum topics by domain. Select any question to begin an immediate session.
             </p>
-            <span className="text-xs font-mono text-slate-400">{TOPICS.length} Total Topics</span>
+            <span className="text-xs font-mono text-[#367D8A]">{TOPICS.length} Total Topics</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -670,34 +690,34 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
               return (
                 <div
                   key={topic.id}
-                  className="rounded-2xl border border-[#1e2642] bg-[#0e1222] p-5 flex flex-col justify-between hover:border-violet-500/40 transition-all hover:-translate-y-1"
+                  className="rounded-2xl border border-[#133336]/50 bg-[#03090a] p-5 flex flex-col justify-between hover:border-[#367D8A]/60 transition-all duration-300 hover:-translate-y-1 group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="rounded-md bg-[#161c33] px-2 py-0.5 text-[11px] font-semibold text-violet-300 border border-[#252e52]">
+                      <span className="rounded-md bg-[#0a181a] px-2 py-0.5 text-[10px] font-mono text-[#5DA8B6] border border-[#133336]">
                         {topic.category}
                       </span>
-                      <span className="text-[11px] text-slate-400 font-mono">
+                      <span className="text-[11px] text-white/40 font-mono">
                         ~{topic.estimatedMinutes}m
                       </span>
                     </div>
 
-                    <h4 className="text-base font-bold text-white mb-1.5 leading-snug">
+                    <h4 className="text-base font-serif font-medium text-white mb-1.5 leading-snug group-hover:text-[#5DA8B6] transition-colors">
                       {topic.title}
                     </h4>
-                    <p className="text-xs text-slate-400 line-clamp-2 mb-4">
+                    <p className="text-xs text-white/50 line-clamp-2 mb-4 leading-relaxed">
                       {topic.shortDescription}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-[#1a213b]">
+                  <div className="flex items-center justify-between pt-3 border-t border-[#133336]/40">
                     <span
-                      className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full ${
                         status === 'strong'
-                          ? 'bg-emerald-500/20 text-emerald-400'
+                          ? 'bg-[#133336] text-[#5DA8B6] border border-[#367D8A]/40'
                           : status === 'attempted'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-slate-800 text-slate-400'
+                          ? 'bg-[#285F6B]/30 text-white/70'
+                          : 'bg-white/[0.04] text-white/30'
                       }`}
                     >
                       {status.replace('_', ' ')}
@@ -705,7 +725,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
 
                     <button
                       onClick={() => navigate(`/practice/session/${topic.id}`)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-violet-400 hover:text-violet-300"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-[#367D8A] hover:text-[#5DA8B6] transition-colors"
                     >
                       <span>Practice</span>
                       <ArrowRight className="h-3.5 w-3.5" />

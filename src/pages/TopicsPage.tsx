@@ -81,10 +81,10 @@ export const TopicsPage: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1e2642] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#133336] pb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
+            <span className="p-2 rounded-xl bg-[#367D8A]/20 text-[#5DA8B6] border border-[#367D8A]/30">
               <BookOpen className="h-6 w-6" />
             </span>
             Topic Explorer & Syllabus
@@ -96,7 +96,7 @@ export const TopicsPage: React.FC = () => {
 
         <button
           onClick={() => navigate('/practice')}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-violet-600/25 hover:brightness-110 active:scale-95 transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#367D8A] to-[#285F6B] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#367D8A]/25 hover:brightness-110 active:scale-95 transition-all self-start sm:self-auto"
         >
           <Compass className="h-4 w-4" />
           <span>Spin Arena</span>
@@ -104,7 +104,7 @@ export const TopicsPage: React.FC = () => {
       </div>
 
       {/* SEARCH AND FILTERS BAR */}
-      <div className="rounded-2xl border border-[#1e2642] bg-[#0c1020] p-4 sm:p-5 space-y-4 shadow-lg">
+      <div className="rounded-2xl border border-[#133336] bg-[#0c1020] p-4 sm:p-5 space-y-4 shadow-lg">
         {/* Search Bar */}
         <div className="relative w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -113,7 +113,7 @@ export const TopicsPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search topics by title, keywords, tags (e.g., 'LRU', 'vtable', 'B-Tree', 'TCP')..."
-            className="w-full rounded-xl border border-[#1e2642] bg-[#080a14] pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 focus:border-violet-500 outline-none"
+            className="w-full rounded-xl border border-[#133336] bg-[#080a14] pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 focus:border-[#367D8A] outline-none"
           />
           {searchQuery && (
             <button
@@ -134,7 +134,7 @@ export const TopicsPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as Category | 'All')}
-              className="rounded-lg border border-[#1e2642] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-violet-500 outline-none"
+              className="rounded-lg border border-[#133336] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-[#367D8A] outline-none"
             >
               <option value="All">All Categories ({TOPICS.length})</option>
               {CATEGORIES_LIST.map((cat) => (
@@ -151,7 +151,7 @@ export const TopicsPage: React.FC = () => {
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value as Difficulty | 'All')}
-              className="rounded-lg border border-[#1e2642] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-violet-500 outline-none"
+              className="rounded-lg border border-[#133336] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-[#367D8A] outline-none"
             >
               <option value="All">All Levels</option>
               <option value="Beginner">Beginner</option>
@@ -166,7 +166,7 @@ export const TopicsPage: React.FC = () => {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as TopicStatus | 'All')}
-              className="rounded-lg border border-[#1e2642] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-violet-500 outline-none"
+              className="rounded-lg border border-[#133336] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-[#367D8A] outline-none"
             >
               <option value="All">All Statuses</option>
               <option value="not_started">Not Started</option>
@@ -183,7 +183,7 @@ export const TopicsPage: React.FC = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-lg border border-[#1e2642] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-violet-500 outline-none"
+              className="rounded-lg border border-[#133336] bg-[#12162a] px-2.5 py-1.5 text-xs text-slate-200 focus:border-[#367D8A] outline-none"
             >
               <option value="title">Title (A-Z)</option>
               <option value="difficulty">Difficulty (Easy-Hard)</option>
@@ -205,7 +205,7 @@ export const TopicsPage: React.FC = () => {
                 setSelectedDifficulty('All');
                 setSelectedStatus('All');
               }}
-              className="text-violet-400 hover:underline"
+              className="text-[#5DA8B6] hover:underline"
             >
               Reset all filters
             </button>
@@ -222,13 +222,13 @@ export const TopicsPage: React.FC = () => {
               return (
                 <div
                   key={topic.id}
-                  className="rounded-2xl border border-[#1e2642] bg-[#0c1020] p-5 flex flex-col justify-between hover:border-violet-500/40 transition-all hover:-translate-y-1 shadow-md group"
+                  className="rounded-2xl border border-[#133336] bg-[#0c1020] p-5 flex flex-col justify-between hover:border-[#367D8A]/40 transition-all hover:-translate-y-1 shadow-md group"
                 >
                   <div>
                     {/* Card Top: Badges & Bookmark */}
                     <div className="flex items-center justify-between gap-2 mb-2.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="rounded-md bg-violet-600/20 px-2 py-0.5 text-[11px] font-semibold text-violet-300 border border-violet-500/30">
+                        <span className="rounded-md bg-[#367D8A]/20 px-2 py-0.5 text-[11px] font-semibold text-[#5DA8B6] border border-[#367D8A]/30">
                           {topic.category}
                         </span>
                         <span className="rounded-md bg-[#161c33] px-2 py-0.5 text-[10px] font-semibold text-slate-300 border border-[#232b4d]">
@@ -241,7 +241,7 @@ export const TopicsPage: React.FC = () => {
                         className={`p-1.5 rounded-lg border transition-colors ${
                           bookmarked
                             ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                            : 'border-[#1e2642] text-slate-500 hover:text-slate-300'
+                            : 'border-[#133336] text-slate-500 hover:text-slate-300'
                         }`}
                         title={bookmarked ? 'Remove bookmark' : 'Bookmark for later'}
                       >
@@ -250,7 +250,7 @@ export const TopicsPage: React.FC = () => {
                     </div>
 
                     {/* Title & Description */}
-                    <h3 className="text-base font-bold text-white mb-2 leading-snug group-hover:text-violet-200 transition-colors">
+                    <h3 className="text-base font-bold text-white mb-2 leading-snug group-hover:text-[#5DA8B6] transition-colors">
                       {topic.title}
                     </h3>
                     <p className="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">
@@ -302,7 +302,7 @@ export const TopicsPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => navigate(`/practice/session/${topic.id}`)}
-                        className="flex items-center gap-1 rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold text-white hover:bg-violet-500 transition-colors"
+                        className="flex items-center gap-1 rounded-lg bg-[#367D8A] px-3 py-1 text-xs font-bold text-white hover:bg-[#367D8A] transition-colors"
                       >
                         <span>Practice</span>
                         <ArrowRight className="h-3 w-3" />
@@ -314,7 +314,7 @@ export const TopicsPage: React.FC = () => {
             })}
           </div>
         ) : (
-          <div className="rounded-3xl border border-dashed border-[#1e2642] bg-[#0c1020] p-12 text-center space-y-3">
+          <div className="rounded-3xl border border-dashed border-[#133336] bg-[#0c1020] p-12 text-center space-y-3">
             <BookOpen className="h-10 w-10 text-slate-600 mx-auto" />
             <h4 className="text-base font-bold text-slate-300">No matching topics found</h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -332,7 +332,7 @@ export const TopicsPage: React.FC = () => {
             <div className="flex items-start justify-between border-b border-[#1b2344] pb-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="rounded bg-violet-600/20 px-2 py-0.5 text-xs font-semibold text-violet-300">
+                  <span className="rounded bg-[#367D8A]/20 px-2 py-0.5 text-xs font-semibold text-[#5DA8B6]">
                     {inspectingTopic.category}
                   </span>
                   <span className="rounded bg-[#161c33] px-2 py-0.5 text-xs font-semibold text-slate-300">
@@ -354,8 +354,8 @@ export const TopicsPage: React.FC = () => {
             </div>
 
             {/* The Interview Question */}
-            <div className="rounded-2xl border border-violet-500/30 bg-violet-950/20 p-4">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400 block mb-1">
+            <div className="rounded-2xl border border-[#367D8A]/30 bg-[#133336]/20 p-4">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#5DA8B6] block mb-1">
                 Primary Interview Question
               </span>
               <p className="text-sm font-semibold text-white">
@@ -368,7 +368,7 @@ export const TopicsPage: React.FC = () => {
               <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                 Revision Notes & Conceptual Principles
               </h4>
-              <ul className="space-y-1.5 text-xs text-slate-300 pl-4 list-disc marker:text-violet-400">
+              <ul className="space-y-1.5 text-xs text-slate-300 pl-4 list-disc marker:text-[#5DA8B6]">
                 {inspectingTopic.revisionNotes.map((note, idx) => (
                   <li key={idx}>{note}</li>
                 ))}
@@ -412,7 +412,7 @@ export const TopicsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {inspectingTopic.suggestedAnswerStructure.map((item, idx) => (
                   <div key={idx} className="rounded-xl bg-[#141933] p-3 border border-[#232b55]">
-                    <span className="text-xs font-bold text-violet-300 block">{item.section}</span>
+                    <span className="text-xs font-bold text-[#5DA8B6] block">{item.section}</span>
                     <p className="text-[11px] text-slate-400 mt-0.5">{item.guidance}</p>
                   </div>
                 ))}
@@ -432,7 +432,7 @@ export const TopicsPage: React.FC = () => {
                   setInspectingTopic(null);
                   navigate(`/practice/session/${inspectingTopic.id}`);
                 }}
-                className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-5 py-2 text-xs font-bold text-white hover:bg-violet-500 shadow-md shadow-violet-600/30"
+                className="flex items-center gap-1.5 rounded-xl bg-[#367D8A] px-5 py-2 text-xs font-bold text-white hover:bg-[#367D8A] shadow-md shadow-[#367D8A]/30"
               >
                 <span>Practice Challenge</span>
                 <ArrowRight className="h-3.5 w-3.5" />

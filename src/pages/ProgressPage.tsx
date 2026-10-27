@@ -120,10 +120,10 @@ export const ProgressPage: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1e2642] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#133336] pb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
+            <span className="p-2 rounded-xl bg-[#367D8A]/20 text-[#5DA8B6] border border-[#367D8A]/30">
               <BarChart3 className="h-6 w-6" />
             </span>
             Progress & Performance Analytics
@@ -135,7 +135,7 @@ export const ProgressPage: React.FC = () => {
 
         <Link
           to="/practice"
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-violet-600/25 hover:brightness-110 active:scale-95 transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#367D8A] to-[#285F6B] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#367D8A]/25 hover:brightness-110 active:scale-95 transition-all self-start sm:self-auto"
         >
           <Compass className="h-4 w-4" />
           <span>Practice Arena</span>
@@ -145,10 +145,10 @@ export const ProgressPage: React.FC = () => {
       {/* TOP ANALYTICS HIGHLIGHT CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Study Time */}
-        <div className="rounded-2xl border border-[#1e2642] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
+        <div className="rounded-2xl border border-[#133336] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Total Practice Time</span>
-            <Clock className="h-4 w-4 text-violet-400" />
+            <Clock className="h-4 w-4 text-[#5DA8B6]" />
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-black text-white font-mono flex items-baseline gap-1">
@@ -159,7 +159,7 @@ export const ProgressPage: React.FC = () => {
         </div>
 
         {/* Average Self-Score */}
-        <div className="rounded-2xl border border-[#1e2642] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
+        <div className="rounded-2xl border border-[#133336] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Average Self-Score</span>
             <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
@@ -174,7 +174,7 @@ export const ProgressPage: React.FC = () => {
         </div>
 
         {/* Strongest Subject */}
-        <div className="rounded-2xl border border-[#1e2642] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
+        <div className="rounded-2xl border border-[#133336] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Strongest Domain</span>
             <Award className="h-4 w-4 text-emerald-400" />
@@ -190,7 +190,7 @@ export const ProgressPage: React.FC = () => {
         </div>
 
         {/* Needs Work Subject */}
-        <div className="rounded-2xl border border-[#1e2642] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
+        <div className="rounded-2xl border border-[#133336] bg-[#0c1020] p-5 flex flex-col justify-between shadow-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Focus Area</span>
             <TrendingUp className="h-4 w-4 text-amber-400" />
@@ -209,11 +209,11 @@ export const ProgressPage: React.FC = () => {
       {/* 2 COLUMNS: 7-DAY BAR CHART & CRITERIA RADAR BREAKDOWN */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* 7-Day Activity Visual Bar Chart (7 cols) */}
-        <div className="lg:col-span-7 rounded-3xl border border-[#1e2642] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-6">
+        <div className="lg:col-span-7 rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-6">
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-violet-400" />
+                <Calendar className="h-4 w-4 text-[#5DA8B6]" />
                 7-Day Practice Volume & Activity
               </h3>
               <span className="text-xs font-mono text-slate-400">
@@ -240,14 +240,14 @@ export const ProgressPage: React.FC = () => {
                   <div
                     className={`w-full max-w-[36px] rounded-t-xl transition-all duration-500 ${
                       day.hasActivity
-                        ? 'bg-gradient-to-t from-violet-600 via-indigo-500 to-cyan-400 shadow-sm shadow-violet-600/30'
+                        ? 'bg-gradient-to-t from-[#367D8A] via-[#367D8A] to-cyan-400 shadow-sm shadow-[#367D8A]/30'
                         : 'bg-[#151c33]'
                     }`}
                     style={{ height: `${heightPercent}%` }}
                   />
 
                   {/* Day Label */}
-                  <span className={`text-[11px] font-bold mt-1 ${day.isToday ? 'text-violet-400' : 'text-slate-400'}`}>
+                  <span className={`text-[11px] font-bold mt-1 ${day.isToday ? 'text-[#5DA8B6]' : 'text-slate-400'}`}>
                     {day.dayShort}
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export const ProgressPage: React.FC = () => {
         </div>
 
         {/* 4 Rubric Evaluation Criteria Breakdown (5 cols) */}
-        <div className="lg:col-span-5 rounded-3xl border border-[#1e2642] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-5">
+        <div className="lg:col-span-5 rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-5">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2 mb-1">
               <Brain className="h-4 w-4 text-cyan-400" />
@@ -277,7 +277,7 @@ export const ProgressPage: React.FC = () => {
 
           <div className="space-y-4">
             {[
-              { label: 'Technical Correctness', val: criteriaAverages.correctness, color: 'from-violet-500 to-indigo-500' },
+              { label: 'Technical Correctness', val: criteriaAverages.correctness, color: 'from-[#367D8A] to-[#367D8A]' },
               { label: 'Completeness & Depth', val: criteriaAverages.completeness, color: 'from-cyan-500 to-blue-500' },
               { label: 'Communication Clarity', val: criteriaAverages.clarity, color: 'from-emerald-500 to-teal-500' },
               { label: 'Practical Examples', val: criteriaAverages.examples, color: 'from-amber-500 to-orange-500' },
@@ -304,7 +304,7 @@ export const ProgressPage: React.FC = () => {
       </div>
 
       {/* TOPIC STATUS DISTRIBUTION */}
-      <div className="rounded-3xl border border-[#1e2642] bg-[#0c1020] p-6 shadow-xl space-y-4">
+      <div className="rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl space-y-4">
         <h3 className="text-base font-bold text-white">
           Syllabus Topic Status Distribution ({TOPICS.length} Total)
         </h3>
@@ -322,8 +322,8 @@ export const ProgressPage: React.FC = () => {
             <span className="text-[10px] text-slate-500 mt-0.5 block">2+ practice attempts</span>
           </div>
 
-          <div className="rounded-2xl border border-violet-500/30 bg-violet-950/15 p-4 text-center">
-            <span className="text-[10px] font-bold uppercase text-violet-400 block">Attempted Once</span>
+          <div className="rounded-2xl border border-[#367D8A]/30 bg-[#133336]/15 p-4 text-center">
+            <span className="text-[10px] font-bold uppercase text-[#5DA8B6] block">Attempted Once</span>
             <span className="text-2xl font-black text-white font-mono mt-1 block">{statusBreakdown.attempted}</span>
             <span className="text-[10px] text-slate-500 mt-0.5 block">Initial challenge done</span>
           </div>
@@ -334,7 +334,7 @@ export const ProgressPage: React.FC = () => {
             <span className="text-[10px] text-slate-500 mt-0.5 block">Due in spaced schedule</span>
           </div>
 
-          <div className="rounded-2xl border border-[#1e2642] bg-[#090b16] p-4 text-center col-span-2 sm:col-span-1">
+          <div className="rounded-2xl border border-[#133336] bg-[#090b16] p-4 text-center col-span-2 sm:col-span-1">
             <span className="text-[10px] font-bold uppercase text-slate-400 block">Not Started</span>
             <span className="text-2xl font-black text-slate-300 font-mono mt-1 block">{statusBreakdown.not_started}</span>
             <span className="text-[10px] text-slate-500 mt-0.5 block">Awaiting first attempt</span>
@@ -343,7 +343,7 @@ export const ProgressPage: React.FC = () => {
       </div>
 
       {/* FULL SESSION PRACTICE HISTORY LOG TABLE */}
-      <div className="rounded-3xl border border-[#1e2642] bg-[#0c1020] p-6 shadow-xl space-y-4">
+      <div className="rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-[#1b223d] pb-3">
           <div>
             <h3 className="text-base font-bold text-white">Complete Practice History Log</h3>
@@ -355,7 +355,7 @@ export const ProgressPage: React.FC = () => {
         {sessions.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-[#1e2642] text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <thead className="border-b border-[#133336] text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="py-3 px-3">Date</th>
                   <th className="py-3 px-3">Topic Title</th>
@@ -375,7 +375,7 @@ export const ProgressPage: React.FC = () => {
                         {formatDisplayDate(s.completedAt)}
                       </td>
                       <td className="py-3 px-3 font-semibold text-white max-w-xs truncate">
-                        <Link to={`/practice/session/${s.topicId}`} className="hover:text-violet-300">
+                        <Link to={`/practice/session/${s.topicId}`} className="hover:text-[#5DA8B6]">
                           {s.topicTitle}
                         </Link>
                       </td>
@@ -401,7 +401,7 @@ export const ProgressPage: React.FC = () => {
                       <td className="py-3 px-3 text-slate-400 font-mono">
                         {Math.floor(s.durationSeconds / 60)}m {s.durationSeconds % 60}s
                       </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-violet-400">
+                      <td className="py-3 px-3 text-right font-mono font-bold text-[#5DA8B6]">
                         +{s.xpEarned} XP
                       </td>
                     </tr>

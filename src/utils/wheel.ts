@@ -16,80 +16,80 @@ export const WHEEL_CATEGORIES: WheelCategoryMeta[] = [
     category: 'DSA',
     label: 'Data Structures & Algorithms',
     shortLabel: 'DSA',
-    color: '#DD700B', // Frozen Mist - Burnished Amber
-    secondaryColor: '#B85806',
-    textColor: '#FCF8D8',
-    accentGlow: 'rgba(221, 112, 11, 0.6)',
+    color: '#367D8A', // Primary Teal
+    secondaryColor: '#285F6B',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(54, 125, 138, 0.45)',
     icon: 'Layers',
   },
   {
     category: 'OOPS',
     label: 'OOPS & Architecture',
     shortLabel: 'OOPS',
-    color: '#7C7D75', // Frozen Mist - Mineral Slate
-    secondaryColor: '#5E5F57',
-    textColor: '#FCF8D8',
-    accentGlow: 'rgba(124, 125, 117, 0.6)',
+    color: '#285F6B', // Secondary Teal
+    secondaryColor: '#133336',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(40, 95, 107, 0.45)',
     icon: 'Box',
   },
   {
     category: 'DBMS',
     label: 'Database Systems',
     shortLabel: 'DBMS',
-    color: '#ADACA7', // Frozen Mist - Frosted Ash
-    secondaryColor: '#8E8D88',
-    textColor: '#121316',
-    accentGlow: 'rgba(173, 172, 167, 0.6)',
+    color: '#1E4E57', // Deep Mid Teal
+    secondaryColor: '#133336',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(30, 78, 87, 0.45)',
     icon: 'Database',
   },
   {
     category: 'OS',
     label: 'Operating Systems',
     shortLabel: 'OS',
-    color: '#D9DADF', // Frozen Mist - Pale Frost Mist
-    secondaryColor: '#B5B7BE',
-    textColor: '#121316',
-    accentGlow: 'rgba(217, 218, 223, 0.6)',
+    color: '#3E8C9A', // Luminous Teal
+    secondaryColor: '#285F6B',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(62, 140, 154, 0.45)',
     icon: 'Cpu',
   },
   {
     category: 'NETWORKS',
     label: 'Computer Networks',
     shortLabel: 'Networks',
-    color: '#E48222', // Frozen Mist - Bright Ochre
-    secondaryColor: '#BE6009',
-    textColor: '#FCF8D8',
-    accentGlow: 'rgba(228, 130, 34, 0.6)',
+    color: '#235661', // Rich Teal
+    secondaryColor: '#163B42',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(35, 86, 97, 0.45)',
     icon: 'Network',
   },
   {
     category: 'SYSTEM_DESIGN',
     label: 'System Design',
     shortLabel: 'Sys Design',
-    color: '#696A62', // Frozen Mist - Deep Slate
-    secondaryColor: '#4D4E47',
-    textColor: '#FCF8D8',
-    accentGlow: 'rgba(105, 106, 98, 0.6)',
+    color: '#367D8A', // Primary Teal
+    secondaryColor: '#1E4E57',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(54, 125, 138, 0.45)',
     icon: 'Server',
   },
   {
     category: 'BEHAVIORAL',
     label: 'HR & Behavioral',
     shortLabel: 'HR & Star',
-    color: '#FCF8D8', // Frozen Mist - Warm Pale Cream
-    secondaryColor: '#DDD7AC',
-    textColor: '#1A1C1E',
-    accentGlow: 'rgba(252, 248, 216, 0.6)',
+    color: '#285F6B', // Secondary Teal
+    secondaryColor: '#1A434B',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(40, 95, 107, 0.45)',
     icon: 'Users',
   },
   {
     category: 'PROJECT_DEFENSE',
     label: 'Project & Resume Defense',
     shortLabel: 'Projects',
-    color: '#C2610A', // Frozen Mist - Rich Amber
-    secondaryColor: '#994903',
-    textColor: '#FCF8D8',
-    accentGlow: 'rgba(194, 97, 10, 0.6)',
+    color: '#133336', // Deep Teal
+    secondaryColor: '#0A1D20',
+    textColor: '#FFFFFF',
+    accentGlow: 'rgba(19, 51, 54, 0.45)',
     icon: 'ShieldCheck',
   },
 ];
@@ -102,7 +102,7 @@ export function calculateRotationToCategory(
   targetCategoryIndex: number,
   currentRotation: number,
   totalSlices: number = WHEEL_CATEGORIES.length,
-  minRevolutions: number = 5
+  minRevolutions: number = 7
 ): number {
   const sliceAngle = 360 / totalSlices;
   const sliceCenterAngle = targetCategoryIndex * sliceAngle + sliceAngle / 2;
@@ -117,7 +117,7 @@ export function calculateRotationToCategory(
     forwardAngle += 360;
   }
 
-  // Add random spins
+  // Add revolutions to match the 7.08s deceleration of the roulette sound
   const fullRevs = 360 * minRevolutions;
   return currentRotation + fullRevs + forwardAngle;
 }
