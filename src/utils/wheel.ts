@@ -1,95 +1,99 @@
-﻿import type { Category, Topic } from '../types/topic';
+import type { Category, Topic } from '../types/topic';
 
 export interface WheelCategoryMeta {
   category: Category;
   label: string;
   shortLabel: string;
-  color: string; // Primary wedge color
-  secondaryColor: string; // Gradient end
+  color: string;
+  secondaryColor: string;
   textColor: string;
   accentGlow: string;
   icon: string;
 }
 
+/**
+ * MK Vision Studio Architectural Wheel Palette
+ * Deep tonal obsidian & charcoal wedges with electric mint (#03E29C) and warm bronze accents.
+ */
 export const WHEEL_CATEGORIES: WheelCategoryMeta[] = [
   {
     category: 'DSA',
     label: 'Data Structures & Algorithms',
     shortLabel: 'DSA',
-    color: '#367D8A', // Primary Teal
-    secondaryColor: '#285F6B',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(54, 125, 138, 0.45)',
+    color: '#132822', // Deep Studio Emerald
+    secondaryColor: '#091512',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(3, 226, 156, 0.45)',
     icon: 'Layers',
   },
   {
     category: 'OOPS',
     label: 'OOPS & Architecture',
     shortLabel: 'OOPS',
-    color: '#285F6B', // Secondary Teal
-    secondaryColor: '#133336',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(40, 95, 107, 0.45)',
+    color: '#1A212D', // Deep Steel Charcoal
+    secondaryColor: '#0E131A',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(243, 244, 246, 0.25)',
     icon: 'Box',
   },
   {
     category: 'DBMS',
     label: 'Database Systems',
     shortLabel: 'DBMS',
-    color: '#1E4E57', // Deep Mid Teal
-    secondaryColor: '#133336',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(30, 78, 87, 0.45)',
+    color: '#1C2723', // Studio Dark Mint
+    secondaryColor: '#0D1614',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(3, 226, 156, 0.4)',
     icon: 'Database',
   },
   {
     category: 'OS',
     label: 'Operating Systems',
     shortLabel: 'OS',
-    color: '#3E8C9A', // Luminous Teal
-    secondaryColor: '#285F6B',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(62, 140, 154, 0.45)',
+    color: '#26221A', // Warm Studio Bronze Dark
+    secondaryColor: '#14110C',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(200, 155, 88, 0.45)',
     icon: 'Cpu',
   },
   {
     category: 'NETWORKS',
     label: 'Computer Networks',
     shortLabel: 'Networks',
-    color: '#235661', // Rich Teal
-    secondaryColor: '#163B42',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(35, 86, 97, 0.45)',
+    color: '#15252A', // Dark Slate Teal
+    secondaryColor: '#0A1317',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(3, 226, 156, 0.35)',
     icon: 'Network',
   },
   {
     category: 'SYSTEM_DESIGN',
     label: 'System Design',
     shortLabel: 'Sys Design',
-    color: '#367D8A', // Primary Teal
-    secondaryColor: '#1E4E57',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(54, 125, 138, 0.45)',
+    color: '#183028', // Studio Emerald Forest
+    secondaryColor: '#0A1713',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(3, 226, 156, 0.5)',
     icon: 'Server',
   },
   {
     category: 'BEHAVIORAL',
     label: 'HR & Behavioral',
     shortLabel: 'HR & Star',
-    color: '#285F6B', // Secondary Teal
-    secondaryColor: '#1A434B',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(40, 95, 107, 0.45)',
+    color: '#24211D', // Subtle Bronze Charcoal
+    secondaryColor: '#12100E',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(200, 155, 88, 0.4)',
     icon: 'Users',
   },
   {
     category: 'PROJECT_DEFENSE',
     label: 'Project & Resume Defense',
     shortLabel: 'Projects',
-    color: '#133336', // Deep Teal
-    secondaryColor: '#0A1D20',
-    textColor: '#FFFFFF',
-    accentGlow: 'rgba(19, 51, 54, 0.45)',
+    color: '#1B1E26', // Charcoal Carbon
+    secondaryColor: '#0B0D11',
+    textColor: '#F3F4F6',
+    accentGlow: 'rgba(243, 244, 246, 0.3)',
     icon: 'ShieldCheck',
   },
 ];
@@ -117,7 +121,7 @@ export function calculateRotationToCategory(
     forwardAngle += 360;
   }
 
-  // Add revolutions to match the 7.08s deceleration of the roulette sound
+  // Add revolutions to match the deceleration of the roulette sound
   const fullRevs = 360 * minRevolutions;
   return currentRotation + fullRevs + forwardAngle;
 }

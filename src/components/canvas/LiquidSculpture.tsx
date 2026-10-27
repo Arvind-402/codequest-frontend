@@ -8,14 +8,16 @@ interface LiquidSculptureProps {
 }
 
 /**
- * Signature 3D Centerpiece for CodeQuest: "The Algorithmic Monolith"
- * 
- * Architecture:
- * 1. Inner Liquid-Obsidian Kernel (Multi-octave simplex noise morphing with metallic sheen)
- * 2. Outer Translucent Crystalline Ribbon Cage (Refractive glass with cyan/teal chromatic dispersion)
- * 3. Gyroscopic Orbital Precision Rings (Precision algorithmic execution loops with tick markers)
- * 4. Atmospheric Memory Constellation (Deep floating crystalline particles)
- * 5. Smooth mouse interpolation, scroll-depth perspective, 60fps performance optimization
+ * MK Vision Studio Inspired 3D Sliding Perspective Sculpture
+ * "The Algorithmic Monolith — Studio Edition"
+ *
+ * Visual Features:
+ * - Inner Liquid Obsidian Core with multi-harmonic simplex noise
+ * - Outer Translucent Crystalline Ribbon Cage with #03E29C (Studio Mint) dispersion
+ * - Twin Gyroscopic Execution Loops (Precision gold/bronze and emerald orbits)
+ * - Scroll-Linked 3D Spatial Trajectory: smoothly slides along X, Y, and Z perspective axes
+ * - Cursor Parallax with smooth cubic lerping
+ * - Auto-pauses offscreen & inactive tabs for strict 60 FPS performance
  */
 export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
   className = '',
@@ -29,7 +31,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // Check prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let renderer: THREE.WebGLRenderer | null = null;
@@ -42,10 +43,10 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       const width = container.clientWidth || window.innerWidth;
       const height = container.clientHeight || window.innerHeight;
 
-      // 1. Scene & Camera Setup
+      // 1. Scene & Perspective Camera
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-      camera.position.set(0, 0, 8.8);
+      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+      camera.position.set(0, 0, 9.2);
 
       // 2. High-Performance WebGL Renderer
       renderer = new THREE.WebGLRenderer({
@@ -56,13 +57,12 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       renderer.setSize(width, height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
+      renderer.toneMappingExposure = 1.2;
       container.appendChild(renderer.domElement);
 
-      // Parent Anchor Group for smooth mouse and scroll parallax
+      // Master 3D Spatial Anchor (Slides dynamically across scroll progress)
       const masterGroup = new THREE.Group();
-      // Position slightly to the right so it beautifully anchors behind the right side of the headline
-      masterGroup.position.set(1.1, 0.15, 0);
+      masterGroup.position.set(1.2, 0.2, 0);
       scene.add(masterGroup);
 
       // -------------------------------------------------------------
@@ -77,7 +77,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         varying vec3 vViewPosition;
         varying float vDisplacement;
 
-        // Simplex 3D Noise Implementation
         vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
         vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
 
@@ -126,13 +125,11 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
         void main() {
           vNormal = normalize(normalMatrix * normal);
-          
-          // Multi-frequency harmonic liquid displacement
-          float t = uTime * 0.28;
-          vec3 coord = position * 0.65;
+          float t = uTime * 0.25;
+          vec3 coord = position * 0.7;
           float n1 = snoise(coord + vec3(0.0, t, 0.0));
-          float n2 = snoise(coord * 2.1 - vec3(t * 0.8, 0.0, t * 0.5)) * 0.45;
-          float n3 = snoise(coord * 4.2 + vec3(t * 0.4, t * 0.6, 0.0)) * 0.18;
+          float n2 = snoise(coord * 2.0 - vec3(t * 0.7, 0.0, t * 0.4)) * 0.42;
+          float n3 = snoise(coord * 4.0 + vec3(t * 0.3, t * 0.5, 0.0)) * 0.16;
           
           float totalDisplacement = (n1 + n2 + n3) * uNoiseStrength;
           vDisplacement = totalDisplacement;
@@ -148,9 +145,8 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       `;
 
       const kernelFragmentShader = `
-        uniform vec3 uColorTealPrimary;
-        uniform vec3 uColorTealSecondary;
-        uniform vec3 uColorTealDeep;
+        uniform vec3 uColorMint;
+        uniform vec3 uColorBronze;
         uniform vec3 uColorHighlight;
         varying vec3 vNormal;
         varying vec3 vWorldPosition;
@@ -161,42 +157,36 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
           vec3 N = normalize(vNormal);
           vec3 V = normalize(vViewPosition);
 
-          // Fresnel equations for metallic rim definition
           float NdotV = max(dot(N, V), 0.0);
-          float fresnel = pow(1.0 - NdotV, 3.2);
-          float deepFresnel = pow(1.0 - NdotV, 1.8);
+          float fresnel = pow(1.0 - NdotV, 3.4);
+          float softFresnel = pow(1.0 - NdotV, 1.8);
 
-          // Dual key & rim lights
-          vec3 lightDir1 = normalize(vec3(-1.2, 1.4, 1.0));
-          vec3 lightDir2 = normalize(vec3(1.4, -1.0, 0.8));
+          vec3 lightDir1 = normalize(vec3(-1.2, 1.3, 1.0));
+          vec3 lightDir2 = normalize(vec3(1.3, -1.0, 0.7));
 
-          // 1. Primary Teal Rim (#367D8A)
+          // 1. MK Studio Mint Rim (#03E29C)
           float diff1 = max(dot(N, lightDir1), 0.0);
-          vec3 primaryRim = uColorTealPrimary * (fresnel * 2.8 + diff1 * 0.35);
+          vec3 mintRim = uColorMint * (fresnel * 3.2 + diff1 * 0.4);
 
-          // 2. Secondary Teal Rim (#285F6B)
+          // 2. Editorial Bronze Rim (#C89B58)
           float diff2 = max(dot(N, lightDir2), 0.0);
-          vec3 secondaryRim = uColorTealSecondary * (deepFresnel * 1.8 + diff2 * 0.25);
+          vec3 bronzeRim = uColorBronze * (softFresnel * 1.6 + diff2 * 0.3);
 
-          // 3. Subsurface Deep Teal Glow (#133336)
-          float scatter = pow(1.0 - NdotV, 2.0) * 0.6;
-          vec3 internalGlow = uColorTealDeep * (scatter + (vDisplacement + 0.3) * 0.4);
-
-          // 4. Specular Highlight Glints (#FFFFFF)
+          // 3. Specular Razor Edge (#FFFFFF)
           vec3 H1 = normalize(lightDir1 + V);
-          float spec1 = pow(max(dot(N, H1), 0.0), 64.0);
-          vec3 specGlaze = uColorHighlight * (spec1 * 2.2);
+          float spec1 = pow(max(dot(N, H1), 0.0), 80.0);
+          vec3 specGlaze = uColorHighlight * (spec1 * 2.4);
 
-          // Deep Obsidian Body Tone (#010001)
-          vec3 obsidianBody = vec3(0.004, 0.006, 0.008);
+          // Deep Architectural Charcoal Body (#08090B)
+          vec3 charcoalBody = vec3(0.03, 0.035, 0.04);
 
-          vec3 finalColor = obsidianBody + internalGlow + secondaryRim + primaryRim + specGlaze;
+          vec3 finalColor = charcoalBody + bronzeRim + mintRim + specGlaze;
           gl_FragColor = vec4(finalColor, 0.96);
         }
       `;
 
       // -------------------------------------------------------------
-      // SHADERS: Outer Translucent Glass Lattice Ribbon
+      // SHADERS: Outer Crystalline Glass Ribbon Cage
       // -------------------------------------------------------------
       const glassVertexShader = `
         uniform float uTime;
@@ -215,10 +205,9 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       `;
 
       const glassFragmentShader = `
-        uniform vec3 uColorTealPrimary;
-        uniform vec3 uColorTealSecondary;
+        uniform vec3 uColorMint;
+        uniform vec3 uColorBronze;
         uniform vec3 uColorHighlight;
-        uniform float uTime;
         varying vec3 vNormal;
         varying vec3 vViewPosition;
         varying vec3 vWorldPosition;
@@ -228,39 +217,32 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
           vec3 V = normalize(vViewPosition);
 
           float NdotV = max(dot(N, V), 0.0);
-          // Strong outer edge luminescence
-          float fresnel = pow(1.0 - NdotV, 2.5);
-          float rimThin = pow(1.0 - NdotV, 5.0);
+          float fresnel = pow(1.0 - NdotV, 2.6);
+          float rimThin = pow(1.0 - NdotV, 5.2);
 
-          vec3 lightDir = normalize(vec3(-1.0, 1.2, 0.9));
+          vec3 lightDir = normalize(vec3(-1.1, 1.3, 0.9));
           vec3 H = normalize(lightDir + V);
           float spec = pow(max(dot(N, H), 0.0), 96.0);
 
-          // Translucent glass transmission & chromatic dispersion
-          vec3 edgeColor = mix(uColorTealSecondary, uColorTealPrimary, fresnel);
-          vec3 specularLight = uColorHighlight * spec * 2.5 + uColorTealPrimary * (rimThin * 3.0);
-          
-          // Subtle internal refraction tint
-          vec3 refractionTint = uColorTealPrimary * 0.08;
+          vec3 edgeColor = mix(uColorBronze * 0.7, uColorMint, fresnel);
+          vec3 specularLight = uColorHighlight * spec * 2.6 + uColorMint * (rimThin * 3.4);
+          vec3 internalTint = uColorMint * 0.06;
 
-          vec3 finalColor = refractionTint + edgeColor * (fresnel * 1.6) + specularLight;
-          float alpha = clamp(0.18 + fresnel * 0.65 + spec * 0.3, 0.0, 0.92);
+          vec3 finalColor = internalTint + edgeColor * (fresnel * 1.8) + specularLight;
+          float alpha = clamp(0.18 + fresnel * 0.68 + spec * 0.35, 0.0, 0.94);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
       `;
 
-      // -------------------------------------------------------------
-      // 1. Create Inner Liquid Obsidian Mesh
-      // -------------------------------------------------------------
-      const kernelGeo = new THREE.IcosahedronGeometry(1.9, 64);
+      // 1. Inner Liquid Kernel Mesh
+      const kernelGeo = new THREE.IcosahedronGeometry(1.85, 64);
       const kernelUniforms = {
         uTime: { value: 0 },
-        uNoiseStrength: { value: prefersReducedMotion ? 0.08 : 0.42 * intensity },
+        uNoiseStrength: { value: prefersReducedMotion ? 0.06 : 0.4 * intensity },
         uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorTealPrimary: { value: new THREE.Color('#367D8A') },
-        uColorTealSecondary: { value: new THREE.Color('#285F6B') },
-        uColorTealDeep: { value: new THREE.Color('#133336') },
+        uColorMint: { value: new THREE.Color('#03E29C') },
+        uColorBronze: { value: new THREE.Color('#C89B58') },
         uColorHighlight: { value: new THREE.Color('#FFFFFF') },
       };
 
@@ -276,15 +258,12 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       const kernelMesh = new THREE.Mesh(kernelGeo, kernelMat);
       masterGroup.add(kernelMesh);
 
-      // -------------------------------------------------------------
-      // 2. Create Outer Translucent Glass Crystalline Ribbon Cage
-      // -------------------------------------------------------------
-      // High-precision TorusKnot represents the intricate, interwoven algorithmic paths
-      const glassGeo = new THREE.TorusKnotGeometry(2.35, 0.28, 140, 28, 2, 3);
+      // 2. Outer Glass Crystalline Torus Cage
+      const glassGeo = new THREE.TorusKnotGeometry(2.35, 0.26, 144, 28, 2, 3);
       const glassUniforms = {
         uTime: { value: 0 },
-        uColorTealPrimary: { value: new THREE.Color('#5DA8B6') },
-        uColorTealSecondary: { value: new THREE.Color('#285F6B') },
+        uColorMint: { value: new THREE.Color('#03E29C') },
+        uColorBronze: { value: new THREE.Color('#C89B58') },
         uColorHighlight: { value: new THREE.Color('#FFFFFF') },
       };
 
@@ -301,16 +280,13 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       const glassMesh = new THREE.Mesh(glassGeo, glassMat);
       masterGroup.add(glassMesh);
 
-      // -------------------------------------------------------------
-      // 3. Gyroscopic Orbital Precision Rings (Algorithm Execution Loops)
-      // -------------------------------------------------------------
+      // 3. Gyroscopic Orbital Precision Rings (Algorithmic Execution)
       const ringGroup = new THREE.Group();
       masterGroup.add(ringGroup);
 
-      // Ring 1 (Inner loop)
       const ring1Geo = new THREE.TorusGeometry(3.1, 0.016, 16, 120);
       const ring1Mat = new THREE.MeshBasicMaterial({
-        color: new THREE.Color('#367D8A'),
+        color: new THREE.Color('#03E29C'),
         transparent: true,
         opacity: 0.55,
       });
@@ -319,10 +295,9 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       ring1Mesh.rotation.y = Math.PI * 0.12;
       ringGroup.add(ring1Mesh);
 
-      // Ring 2 (Outer loop counter-inclination)
       const ring2Geo = new THREE.TorusGeometry(3.55, 0.014, 16, 140);
       const ring2Mat = new THREE.MeshBasicMaterial({
-        color: new THREE.Color('#285F6B'),
+        color: new THREE.Color('#C89B58'),
         transparent: true,
         opacity: 0.42,
       });
@@ -331,33 +306,27 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       ring2Mesh.rotation.z = Math.PI * 0.22;
       ringGroup.add(ring2Mesh);
 
-      // -------------------------------------------------------------
-      // 4. Memory Constellation Lattice (Deep Floating Sparse Particles)
-      // -------------------------------------------------------------
-      const particleCount = 85;
+      // 4. Sparse Constellation Depth Particles
+      const particleCount = 80;
       const particleGeo = new THREE.BufferGeometry();
       const particlePos = new Float32Array(particleCount * 3);
-      const particleScales = new Float32Array(particleCount);
 
       for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
-        // Spherical shell distribution around the central sculpture
-        const radius = 2.8 + Math.random() * 5.2;
+        const radius = 2.8 + Math.random() * 5.0;
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos(Math.random() * 2 - 1);
-
         particlePos[i3] = radius * Math.sin(phi) * Math.cos(theta);
         particlePos[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
         particlePos[i3 + 2] = radius * Math.cos(phi);
-        particleScales[i] = Math.random() * 0.035 + 0.015;
       }
 
       particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
       const particleMat = new THREE.PointsMaterial({
-        color: new THREE.Color('#5DA8B6'),
+        color: new THREE.Color('#03E29C'),
         size: 0.045,
         transparent: true,
-        opacity: 0.48,
+        opacity: 0.45,
         blending: THREE.AdditiveBlending,
       });
 
@@ -365,22 +334,15 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       masterGroup.add(particlePoints);
 
       // -------------------------------------------------------------
-      // Mouse, Scroll & Parallax Interpolation
+      // Smooth Mouse, Scroll & 3D Sliding Interpolation
       // -------------------------------------------------------------
-      const mouse = {
-        x: 0,
-        y: 0,
-        targetX: 0,
-        targetY: 0,
-      };
-
+      const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
       let scrollY = 0;
       let targetScrollY = 0;
 
       const handlePointerMove = (e: MouseEvent) => {
         if (!interactive) return;
         const rect = container.getBoundingClientRect();
-        // Normalized cursor coordinates (-1 to 1)
         mouse.targetX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.targetY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
       };
@@ -392,7 +354,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       window.addEventListener('mousemove', handlePointerMove, { passive: true });
       window.addEventListener('scroll', handleScroll, { passive: true });
 
-      // Handle Resize
       const handleResize = () => {
         if (!container || !renderer || !camera) return;
         const newW = container.clientWidth;
@@ -404,7 +365,6 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       window.addEventListener('resize', handleResize);
 
-      // Visibility Observer: Pause WebGL when hero is out of view for 60fps & battery efficiency
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -418,62 +378,54 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       const clock = new THREE.Clock();
 
       // -------------------------------------------------------------
-      // Animation Loop
+      // 3D Animation & Perspective Sliding Loop
       // -------------------------------------------------------------
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
 
-        // Don't waste GPU cycles when out of viewport or tab is inactive
         if (!isVisible || document.hidden) return;
 
-        // delta removed
         const elapsed = clock.getElapsedTime();
 
-        // Smooth mouse damping (Lerp)
+        // Buttery smooth lerp
         mouse.x += (mouse.targetX - mouse.x) * 0.045;
         mouse.y += (mouse.targetY - mouse.y) * 0.045;
-
-        // Smooth scroll damping
         scrollY += (targetScrollY - scrollY) * 0.06;
 
-        const timeRate = prefersReducedMotion ? 0.05 : 1.0;
+        const timeRate = prefersReducedMotion ? 0.04 : 1.0;
 
-        // 1. Update Shaders
         kernelUniforms.uTime.value = elapsed * timeRate;
         kernelUniforms.uMouse.value.set(mouse.x, mouse.y);
         glassUniforms.uTime.value = elapsed * timeRate;
 
-        // 2. Sculptural Kinematics: Organic multi-speed harmonic rotation
-        kernelMesh.rotation.x = elapsed * 0.08 * timeRate + mouse.y * 0.25;
-        kernelMesh.rotation.y = elapsed * 0.12 * timeRate + mouse.x * 0.35;
-        kernelMesh.position.y = Math.sin(elapsed * 0.42 * timeRate) * 0.14;
+        // Kinematic Harmonic Rotations
+        kernelMesh.rotation.x = elapsed * 0.08 * timeRate + mouse.y * 0.22;
+        kernelMesh.rotation.y = elapsed * 0.12 * timeRate + mouse.x * 0.32;
+        kernelMesh.position.y = Math.sin(elapsed * 0.4 * timeRate) * 0.12;
 
-        // Glass ribbon orbits on counter-axis with refractive depth
-        glassMesh.rotation.x = -elapsed * 0.09 * timeRate + mouse.y * 0.38;
-        glassMesh.rotation.y = elapsed * 0.14 * timeRate + mouse.x * 0.45;
-        glassMesh.rotation.z = Math.sin(elapsed * 0.25 * timeRate) * 0.2;
+        glassMesh.rotation.x = -elapsed * 0.09 * timeRate + mouse.y * 0.35;
+        glassMesh.rotation.y = elapsed * 0.14 * timeRate + mouse.x * 0.42;
+        glassMesh.rotation.z = Math.sin(elapsed * 0.22 * timeRate) * 0.18;
 
-        // 3. Orbital Precision Rings
-        ring1Mesh.rotation.z = elapsed * 0.18 * timeRate;
-        ring2Mesh.rotation.y = -elapsed * 0.14 * timeRate;
+        ring1Mesh.rotation.z = elapsed * 0.16 * timeRate;
+        ring2Mesh.rotation.y = -elapsed * 0.12 * timeRate;
 
-        // 4. Memory constellation drift
         particlePoints.rotation.y = elapsed * 0.02 * timeRate + mouse.x * 0.08;
-        particlePoints.rotation.x = mouse.y * 0.06;
 
-        // 5. Scroll depth interaction: gently tilts and tracks downwards on scroll
-        const scrollFactor = Math.min(scrollY / 800, 1.2);
-        masterGroup.position.y = 0.15 - scrollFactor * 0.85;
-        masterGroup.rotation.x = mouse.y * 0.15 + scrollFactor * 0.22;
-        masterGroup.rotation.y = mouse.x * 0.25;
+        // MK VISION STUDIO 3D PERSPECTIVE SLIDING TRAJECTORY:
+        // As user scrolls, the sculpture glides across X, Y and Z perspective space
+        const scrollNorm = Math.min(scrollY / 1000, 1.5);
+        masterGroup.position.x = 1.2 - scrollNorm * 0.65; // Slides inwards to frame content
+        masterGroup.position.y = 0.2 - scrollNorm * 1.1;  // Tracks gracefully downwards
+        masterGroup.position.z = -scrollNorm * 1.4;       // Shifts slightly in depth
+        masterGroup.rotation.x = mouse.y * 0.15 + scrollNorm * 0.35;
+        masterGroup.rotation.y = mouse.x * 0.25 + scrollNorm * 0.45;
 
-        // Camera micro-sway
         if (camera && renderer && scene) {
-          camera.position.x = mouse.x * 0.35;
-        camera.position.y = mouse.y * 0.25;
-        camera.lookAt(masterGroup.position.x * 0.3, masterGroup.position.y * 0.3, 0);
-
-        renderer.render(scene, camera);
+          camera.position.x = mouse.x * 0.3;
+          camera.position.y = mouse.y * 0.2;
+          camera.lookAt(masterGroup.position.x * 0.35, masterGroup.position.y * 0.35, 0);
+          renderer.render(scene, camera);
         }
       };
 
@@ -517,9 +469,9 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
       {!hasWebGL && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative w-80 h-80 sm:w-96 sm:h-96">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#133336]/40 via-[#285F6B]/30 to-[#367D8A]/20 blur-3xl animate-pulse" />
-            <div className="absolute inset-4 rounded-full border border-[#367D8A]/30 bg-[#010001]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(54,125,138,0.25)] flex items-center justify-center">
-              <div className="w-48 h-48 rounded-full border border-[#285F6B]/30 bg-gradient-to-br from-[#133336] via-[#010001] to-[#367D8A]/30 blur-sm" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#03E29C]/20 via-[#C89B58]/15 to-transparent blur-3xl animate-pulse" />
+            <div className="absolute inset-4 rounded-full border border-[#03E29C]/30 bg-[#08090B]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(3,226,156,0.15)] flex items-center justify-center">
+              <div className="w-48 h-48 rounded-full border border-[#C89B58]/30 bg-gradient-to-br from-[#08090B] via-[#0E141B] to-[#03E29C]/20 blur-sm" />
             </div>
           </div>
         </div>

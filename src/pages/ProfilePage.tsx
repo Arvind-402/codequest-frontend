@@ -52,9 +52,9 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       {/* Header */}
-      <div className="border-b border-[#133336] pb-6">
+      <div className="border-b border-[#16191F] pb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-          <span className="p-2 rounded-xl bg-[#367D8A]/20 text-[#5DA8B6] border border-[#367D8A]/30">
+          <span className="p-2 rounded-xl bg-[#03E29C]/20 text-[#03E29C] border border-[#03E29C]/30">
             <User className="h-6 w-6" />
           </span>
           Profile & Preferences
@@ -65,10 +65,10 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* USER PERSONA & LEVEL CARD */}
-      <div className="rounded-3xl border border-[#133336] bg-gradient-to-br from-[#12162a] via-[#0e1224] to-[#080a14] p-6 sm:p-8 shadow-xl">
+      <div className="rounded-3xl border border-[#16191F] bg-gradient-to-br from-[#12162a] via-[#0e1224] to-[#080a14] p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           {/* Avatar */}
-          <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-[#367D8A] to-cyan-500 flex items-center justify-center text-3xl font-black text-white shadow-xl shadow-[#367D8A]/30 ring-4 ring-[#133336] shrink-0">
+          <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-[#03E29C] to-cyan-500 flex items-center justify-center text-3xl font-black text-white shadow-xl shadow-[#03E29C]/30 ring-4 ring-[#16191F] shrink-0">
             {profile.name.charAt(0)}
           </div>
 
@@ -76,7 +76,7 @@ export const ProfilePage: React.FC = () => {
             <div>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h2 className="text-2xl font-bold text-white">{profile.name}</h2>
-                <span className="rounded-full bg-[#367D8A]/20 px-2.5 py-0.5 text-xs font-bold text-[#5DA8B6] border border-[#367D8A]/30">
+                <span className="rounded-full bg-[#03E29C]/20 px-2.5 py-0.5 text-xs font-bold text-[#03E29C] border border-[#03E29C]/30">
                   Level {levelInfo.level} SDE Candidate
                 </span>
               </div>
@@ -88,7 +88,7 @@ export const ProfilePage: React.FC = () => {
             {/* Level Progress Bar */}
             <div className="space-y-1.5 max-w-md">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#5DA8B6] flex items-center gap-1">
+                <span className="font-semibold text-[#03E29C] flex items-center gap-1">
                   <Sparkles className="h-3.5 w-3.5" />
                   XP Level Progress
                 </span>
@@ -98,7 +98,7 @@ export const ProfilePage: React.FC = () => {
               </div>
               <div className="h-2 w-full bg-[#18203d] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#367D8A] to-cyan-400 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[#03E29C] to-cyan-400 rounded-full transition-all duration-500"
                   style={{ width: `${levelInfo.progressPercent}%` }}
                 />
               </div>
@@ -122,11 +122,11 @@ export const ProfilePage: React.FC = () => {
         {/* Candidate Profile Form */}
         <form
           onSubmit={handleSaveProfile}
-          className="rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-5"
+          className="rounded-3xl border border-[#16191F] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-5"
         >
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2 mb-1">
-              <Sliders className="h-4 w-4 text-[#5DA8B6]" />
+              <Sliders className="h-4 w-4 text-[#03E29C]" />
               Candidate Persona
             </h3>
             <p className="text-xs text-slate-400 mb-4">
@@ -142,7 +142,7 @@ export const ProfilePage: React.FC = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-[#133336] bg-[#080a14] px-4 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-[#367D8A] outline-none"
+                  className="w-full rounded-xl border border-[#16191F] bg-[#080a14] px-4 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-[#03E29C] outline-none"
                   required
                 />
               </div>
@@ -155,7 +155,7 @@ export const ProfilePage: React.FC = () => {
                   type="text"
                   value={targetRole}
                   onChange={(e) => setTargetRole(e.target.value)}
-                  className="w-full rounded-xl border border-[#133336] bg-[#080a14] px-4 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-[#367D8A] outline-none"
+                  className="w-full rounded-xl border border-[#16191F] bg-[#080a14] px-4 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-[#03E29C] outline-none"
                   placeholder="e.g. Full-Stack SDE, Backend Engineer, Systems Intern"
                   required
                 />
@@ -173,7 +173,7 @@ export const ProfilePage: React.FC = () => {
             )}
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl bg-[#367D8A] px-4 py-2 text-xs font-bold text-white hover:bg-[#367D8A] transition-colors shadow-md shadow-[#367D8A]/30"
+              className="flex items-center gap-1.5 rounded-xl bg-[#03E29C] px-4 py-2 text-xs font-bold text-white hover:bg-[#03E29C] transition-colors shadow-md shadow-[#03E29C]/30"
             >
               <Save className="h-3.5 w-3.5" />
               <span>Save Persona</span>
@@ -182,7 +182,7 @@ export const ProfilePage: React.FC = () => {
         </form>
 
         {/* Practice Preferences */}
-        <div className="rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-5">
+        <div className="rounded-3xl border border-[#16191F] bg-[#0c1020] p-6 shadow-xl flex flex-col justify-between space-y-5">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2 mb-1">
               <Target className="h-4 w-4 text-cyan-400" />
@@ -207,7 +207,7 @@ export const ProfilePage: React.FC = () => {
                       className={`rounded-xl py-2 text-xs font-semibold border transition-all ${
                         profile.preferences.dailyGoalCount === count
                           ? 'border-cyan-500 bg-cyan-500/20 text-cyan-300 font-bold'
-                          : 'border-[#133336] bg-[#12162a] text-slate-400 hover:text-white'
+                          : 'border-[#16191F] bg-[#12162a] text-slate-400 hover:text-white'
                       }`}
                     >
                       {count} {count === 1 ? 'Challenge' : 'Challenges'} / day
@@ -229,8 +229,8 @@ export const ProfilePage: React.FC = () => {
                       onClick={() => updatePreferences({ defaultTimerMinutes: mins })}
                       className={`rounded-xl py-1.5 text-xs font-semibold border transition-all ${
                         profile.preferences.defaultTimerMinutes === mins
-                          ? 'border-[#367D8A] bg-[#367D8A]/25 text-[#5DA8B6] font-bold'
-                          : 'border-[#133336] bg-[#12162a] text-slate-400 hover:text-white'
+                          ? 'border-[#03E29C] bg-[#03E29C]/25 text-[#03E29C] font-bold'
+                          : 'border-[#16191F] bg-[#12162a] text-slate-400 hover:text-white'
                       }`}
                     >
                       {mins}m
@@ -256,7 +256,7 @@ export const ProfilePage: React.FC = () => {
                     onChange={(e) =>
                       updatePreferences({ warnBeforeRevealNotes: e.target.checked })
                     }
-                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#367D8A] focus:ring-[#367D8A]"
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#03E29C] focus:ring-[#03E29C]"
                   />
                 </label>
               </div>
@@ -270,7 +270,7 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* ACHIEVEMENTS TROPHY SHOWCASE */}
-      <div className="rounded-3xl border border-[#133336] bg-[#0c1020] p-6 sm:p-8 shadow-xl space-y-6">
+      <div className="rounded-3xl border border-[#16191F] bg-[#0c1020] p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex items-center justify-between border-b border-[#1b223d] pb-4">
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -293,7 +293,7 @@ export const ProfilePage: React.FC = () => {
               className={`rounded-2xl border p-4 flex flex-col justify-between transition-all ${
                 ach.isUnlocked
                   ? 'border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-[#13172e] to-[#0c1020] shadow-md shadow-amber-500/10'
-                  : 'border-[#133336] bg-[#090b16] opacity-60'
+                  : 'border-[#16191F] bg-[#090b16] opacity-60'
               }`}
             >
               <div>
@@ -348,11 +348,11 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* LOCAL DATA MANAGEMENT */}
-      <div className="rounded-3xl border border-[#133336] bg-[#0c1020] p-6 shadow-xl space-y-4">
+      <div className="rounded-3xl border border-[#16191F] bg-[#0c1020] p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-[#1b223d] pb-3">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-[#5DA8B6]" />
+              <ShieldCheck className="h-4 w-4 text-[#03E29C]" />
               Local Storage Data Management
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -364,7 +364,7 @@ export const ProfilePage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-4 pt-1">
           <button
             onClick={loadRichDemoData}
-            className="flex items-center gap-2 rounded-xl border border-[#367D8A]/30 bg-[#367D8A]/20 px-4 py-2.5 text-xs font-bold text-[#5DA8B6] hover:bg-[#367D8A]/30 transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-[#03E29C]/30 bg-[#03E29C]/20 px-4 py-2.5 text-xs font-bold text-[#03E29C] hover:bg-[#03E29C]/30 transition-colors"
           >
             <RotateCcw className="h-4 w-4" />
             <span>Load Rich Starter History</span>

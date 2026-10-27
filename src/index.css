@@ -1,46 +1,50 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 /* ============================================================
-   CODEQUEST — NICHE BOTANICAL TEAL & OBSIDIAN DESIGN SYSTEM
-   Exact Palette:
-   - Background:   #010001
-   - Primary Text: #FFFFFF
-   - Primary Teal: #367D8A
-   - Secondary Teal: #285F6B
-   - Deep Teal:    #133336
+   CODEQUEST — MK VISION STUDIO ARCHITECTURAL DESIGN SYSTEM
+   Palette Tokens:
+   - Deep Matte Void:     #08090B
+   - Architectural Card:  #0F1115
+   - Elevated Panel:      #16191F
+   - Primary Ivory:       #F3F4F6
+   - Muted Bone:          #8E959E
+   - Soft Charcoal:       #555B64
+   - Studio Mint Accent:  #03E29C
+   - Editorial Bronze:    #C89B58
+   - Hairline Grid:       rgba(242, 245, 248, 0.08)
    ============================================================ */
 
 @layer base {
   :root {
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Cormorant Garamond', 'Newsreader', Georgia, serif;
     --font-mono: 'JetBrains Mono', monospace;
 
-    /* Core Palette Tokens */
-    --bg-void: #010001;
-    --bg-app: #030809;
-    --bg-surface: #071315;
-    --bg-card: #0c1c1f;
-    --bg-card-hover: #112529;
-    --bg-elevated: #162f33;
+    /* Background Hierarchy */
+    --bg-void: #08090B;
+    --bg-surface: #0B0D11;
+    --bg-card: #0F1115;
+    --bg-card-hover: #14171E;
+    --bg-elevated: #16191F;
 
-    /* Core Teal System */
-    --teal-primary: #367d8a;
-    --teal-secondary: #285f6b;
-    --teal-deep: #133336;
-    --teal-glow: rgba(54, 125, 138, 0.28);
-    --teal-border: rgba(54, 125, 138, 0.22);
-    --teal-border-bright: rgba(54, 125, 138, 0.55);
+    /* MK Studio Signature Accents */
+    --studio-mint: #03E29C;
+    --studio-mint-soft: rgba(3, 226, 156, 0.12);
+    --studio-mint-border: rgba(3, 226, 156, 0.35);
+    --studio-bronze: #C89B58;
+
+    /* Hairline Architectural Dividers */
+    --hairline: rgba(242, 245, 248, 0.08);
+    --hairline-bright: rgba(242, 245, 248, 0.16);
 
     /* Typography */
-    --text-primary: #ffffff;
-    --text-secondary: #d6e2e4;
-    --text-muted: #8aa4a8;
-    --text-deep: #4d686c;
+    --text-ivory: #F3F4F6;
+    --text-muted: #8E959E;
+    --text-dim: #555B64;
   }
 
   * {
-    border-color: var(--teal-border);
+    border-color: var(--hairline);
   }
 
   html {
@@ -50,8 +54,9 @@
 
   body {
     background-color: var(--bg-void);
-    color: var(--text-primary);
+    color: var(--text-ivory);
     font-family: var(--font-sans);
+    letter-spacing: -0.015em;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -68,91 +73,85 @@
     background-color: var(--bg-void);
   }
 
-  /* Custom Teal Scrollbar */
+  /* Minimal Architectural Scrollbar */
   ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #010001;
+    background: #08090B;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #133336;
+    background: #1B1E26;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #367d8a;
+    background: #03E29C;
   }
 }
 
 /* ============================================================
-   EDITORIAL TYPOGRAPHY CLASSES
+   MK VISION STUDIO EDITORIAL TYPOGRAPHY & UTILITIES
    ============================================================ */
 
 .font-editorial {
   font-family: var(--font-serif);
 }
 
-.text-gradient-teal {
-  background: linear-gradient(135deg, #ffffff 0%, #367d8a 70%, #285f6b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.font-italic-accent {
+  font-family: 'Newsreader', 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
 }
 
-.text-gradient-white {
-  background: linear-gradient(180deg, #ffffff 30%, #8aa4a8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.mkv-num-callout {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
-/* ============================================================
-   CARDS & GLOW EFFECTS
-   ============================================================ */
-
-.teal-card {
-  background: #0c1c1f;
-  border: 1px solid rgba(54, 125, 138, 0.2);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* Hairline Grid & Architectural Surfaces */
+.mkv-hairline {
+  border: 1px solid rgba(242, 245, 248, 0.08);
 }
 
-.teal-card:hover {
-  background: #112529;
-  border-color: rgba(54, 125, 138, 0.45);
-  box-shadow: 0 12px 36px -8px rgba(19, 51, 54, 0.6);
+.mkv-hairline-b {
+  border-bottom: 1px solid rgba(242, 245, 248, 0.08);
 }
 
-.glow-teal-sm {
-  box-shadow: 0 0 20px -3px rgba(54, 125, 138, 0.35);
+.mkv-hairline-t {
+  border-top: 1px solid rgba(242, 245, 248, 0.08);
 }
 
-.glow-teal-lg {
-  box-shadow: 0 0 45px -5px rgba(54, 125, 138, 0.3);
+.mkv-card {
+  background: #0F1115;
+  border: 1px solid rgba(242, 245, 248, 0.08);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Ambient organic glow fields */
-.ambient-teal-primary {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(54, 125, 138, 0.14) 0%, rgba(19, 51, 54, 0.04) 50%, transparent 70%);
-  filter: blur(100px);
-  pointer-events: none;
+.mkv-card:hover {
+  background: #14171E;
+  border-color: rgba(3, 226, 156, 0.3);
+  transform: translateY(-2px);
 }
 
-.ambient-teal-deep {
-  position: absolute;
-  width: 750px;
-  height: 750px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(19, 51, 54, 0.2) 0%, rgba(1, 0, 1, 0) 70%);
-  filter: blur(120px);
-  pointer-events: none;
+.mkv-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(242, 245, 248, 0.04);
+  border: 1px solid rgba(242, 245, 248, 0.09);
+  color: #8E959E;
 }
 
 /* Reduced Motion */
