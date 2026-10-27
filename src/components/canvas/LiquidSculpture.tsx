@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 interface LiquidSculptureProps {
@@ -7,248 +7,256 @@ interface LiquidSculptureProps {
   interactive?: boolean;
 }
 
+/**
+ * Signature 3D Centerpiece for CodeQuest: "The Algorithmic Monolith"
+ * 
+ * Architecture:
+ * 1. Inner Liquid-Obsidian Kernel (Multi-octave simplex noise morphing with metallic sheen)
+ * 2. Outer Translucent Crystalline Ribbon Cage (Refractive glass with cyan/teal chromatic dispersion)
+ * 3. Gyroscopic Orbital Precision Rings (Precision algorithmic execution loops with tick markers)
+ * 4. Atmospheric Memory Constellation (Deep floating crystalline particles)
+ * 5. Smooth mouse interpolation, scroll-depth perspective, 60fps performance optimization
+ */
 export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
   className = '',
   intensity = 1.0,
   interactive = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hasWebGL, setHasWebGL] = useState(true);
+  const [hasWebGL, setHasWebGL] = useState<boolean>(true);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    // Check prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      setHasWebGL(false);
-      return;
-    }
 
     let renderer: THREE.WebGLRenderer | null = null;
     let scene: THREE.Scene | null = null;
     let camera: THREE.PerspectiveCamera | null = null;
     let animationFrameId: number;
+    let isVisible = true;
 
     try {
-      scene = new THREE.Scene();
-
       const width = container.clientWidth || window.innerWidth;
       const height = container.clientHeight || window.innerHeight;
 
-      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-      camera.position.set(0, 0, 7.2);
+      // 1. Scene & Camera Setup
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+      camera.position.set(0, 0, 8.8);
 
+      // 2. High-Performance WebGL Renderer
       renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true,
         powerPreference: 'high-performance',
       });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.1;
+      renderer.toneMappingExposure = 1.15;
       container.appendChild(renderer.domElement);
 
-      const vertexShader = `
+      // Parent Anchor Group for smooth mouse and scroll parallax
+      const masterGroup = new THREE.Group();
+      // Position slightly to the right so it beautifully anchors behind the right side of the headline
+      masterGroup.position.set(1.1, 0.15, 0);
+      scene.add(masterGroup);
+
+      // -------------------------------------------------------------
+      // SHADERS: Inner Liquid Obsidian Kernel
+      // -------------------------------------------------------------
+      const kernelVertexShader = `
         uniform float uTime;
-        uniform float uSpeed;
-        uniform float uNoiseDensity;
         uniform float uNoiseStrength;
         uniform vec2 uMouse;
-
         varying vec3 vNormal;
-        varying vec3 vViewPosition;
         varying vec3 vWorldPosition;
-        varying float vNoise;
+        varying vec3 vViewPosition;
+        varying float vDisplacement;
 
-        // Simplex 3D noise
+        // Simplex 3D Noise Implementation
         vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
         vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
 
         float snoise(vec3 v){
           const vec2 C = vec2(1.0/6.0, 1.0/3.0);
           const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-
           vec3 i  = floor(v + dot(v, C.yyy));
           vec3 x0 = v - i + dot(i, C.xxx);
-
           vec3 g = step(x0.yzx, x0.xyz);
           vec3 l = 1.0 - g;
           vec3 i1 = min(g.xyz, l.zxy);
           vec3 i2 = max(g.xyz, l.zxy);
-
           vec3 x1 = x0 - i1 + 1.0 * C.xxx;
           vec3 x2 = x0 - i2 + 2.0 * C.xxx;
           vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
-
           i = mod(i, 289.0);
           vec4 p = permute(permute(permute(
-                     i.z + vec4(0.0, i1.z, i2.z, 1.0))
-                   + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-                   + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-
+                    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                  + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                  + i.x + vec4(0.0, i1.x, i2.x, 1.0));
           float n_ = 0.142857142857;
           vec3 ns = n_ * D.wyz - D.xzx;
-
           vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-
           vec4 x_ = floor(j * ns.z);
           vec4 y_ = floor(j - 7.0 * x_);
-
-          vec4 x = x_ * ns.x + ns.yyyy;
-          vec4 y = y_ * ns.x + ns.yyyy;
+          vec4 x = x_ *ns.x + ns.yyyy;
+          vec4 y = y_ *ns.x + ns.yyyy;
           vec4 h = 1.0 - abs(x) - abs(y);
-
           vec4 b0 = vec4(x.xy, y.xy);
           vec4 b1 = vec4(x.zw, y.zw);
-
-          vec4 s0 = floor(b0) * 2.0 + 1.0;
-          vec4 s1 = floor(b1) * 2.0 + 1.0;
+          vec4 s0 = floor(b0)*2.0 + 1.0;
+          vec4 s1 = floor(b1)*2.0 + 1.0;
           vec4 sh = -step(h, vec4(0.0));
-
-          vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
-          vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
-
+          vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+          vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
           vec3 p0 = vec3(a0.xy, h.x);
           vec3 p1 = vec3(a0.zw, h.y);
           vec3 p2 = vec3(a1.xy, h.z);
           vec3 p3 = vec3(a1.zw, h.w);
-
-          vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
-          p0 *= norm.x;
-          p1 *= norm.y;
-          p2 *= norm.z;
-          p3 *= norm.w;
-
+          vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+          p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
           vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
           m = m * m;
-          return 42.0 * dot(m * m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+          return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
         }
 
         void main() {
-          float t = uTime * uSpeed;
+          vNormal = normalize(normalMatrix * normal);
           
-          vec3 noisePos = position * uNoiseDensity + vec3(t * 0.32, t * 0.25, t * 0.38);
-          float n1 = snoise(noisePos);
-          float n2 = snoise(noisePos * 2.1 + vec3(t * 0.15)) * 0.5;
-          float noise = (n1 + n2) * uNoiseStrength;
-
-          float mouseDist = length(position.xy - uMouse * 2.0);
-          float mousePush = smoothstep(2.5, 0.0, mouseDist) * 0.22;
-
-          vec3 displaced = position + normal * (noise + mousePush);
-
-          float eps = 0.015;
-          vec3 tx = position + vec3(eps, 0.0, 0.0);
-          vec3 ty = position + vec3(0.0, eps, 0.0);
-          float nx = (snoise(tx * uNoiseDensity + vec3(t * 0.32)) + snoise(tx * 2.1 * uNoiseDensity) * 0.5) * uNoiseStrength;
-          float ny = (snoise(ty * uNoiseDensity + vec3(t * 0.32)) + snoise(ty * 2.1 * uNoiseDensity) * 0.5) * uNoiseStrength;
-          vec3 displacedTx = tx + normal * nx;
-          vec3 displacedTy = ty + normal * ny;
+          // Multi-frequency harmonic liquid displacement
+          float t = uTime * 0.28;
+          vec3 coord = position * 0.65;
+          float n1 = snoise(coord + vec3(0.0, t, 0.0));
+          float n2 = snoise(coord * 2.1 - vec3(t * 0.8, 0.0, t * 0.5)) * 0.45;
+          float n3 = snoise(coord * 4.2 + vec3(t * 0.4, t * 0.6, 0.0)) * 0.18;
           
-          vec3 tangentX = displacedTx - displaced;
-          vec3 tangentY = displacedTy - displaced;
-          vec3 computedNormal = normalize(cross(tangentX, tangentY));
+          float totalDisplacement = (n1 + n2 + n3) * uNoiseStrength;
+          vDisplacement = totalDisplacement;
 
-          vNormal = normalize(normalMatrix * computedNormal);
-          vec4 worldPos = modelMatrix * vec4(displaced, 1.0);
+          vec3 newPos = position + normal * totalDisplacement;
+          vec4 worldPos = modelMatrix * vec4(newPos, 1.0);
           vWorldPosition = worldPos.xyz;
+          
           vec4 mvPosition = viewMatrix * worldPos;
           vViewPosition = -mvPosition.xyz;
-          vNoise = noise;
-
           gl_Position = projectionMatrix * mvPosition;
         }
       `;
 
-      const fragmentShader = `
-        uniform float uTime;
+      const kernelFragmentShader = `
         uniform vec3 uColorTealPrimary;
         uniform vec3 uColorTealSecondary;
         uniform vec3 uColorTealDeep;
         uniform vec3 uColorHighlight;
+        varying vec3 vNormal;
+        varying vec3 vWorldPosition;
+        varying vec3 vViewPosition;
+        varying float vDisplacement;
 
+        void main() {
+          vec3 N = normalize(vNormal);
+          vec3 V = normalize(vViewPosition);
+
+          // Fresnel equations for metallic rim definition
+          float NdotV = max(dot(N, V), 0.0);
+          float fresnel = pow(1.0 - NdotV, 3.2);
+          float deepFresnel = pow(1.0 - NdotV, 1.8);
+
+          // Dual key & rim lights
+          vec3 lightDir1 = normalize(vec3(-1.2, 1.4, 1.0));
+          vec3 lightDir2 = normalize(vec3(1.4, -1.0, 0.8));
+
+          // 1. Primary Teal Rim (#367D8A)
+          float diff1 = max(dot(N, lightDir1), 0.0);
+          vec3 primaryRim = uColorTealPrimary * (fresnel * 2.8 + diff1 * 0.35);
+
+          // 2. Secondary Teal Rim (#285F6B)
+          float diff2 = max(dot(N, lightDir2), 0.0);
+          vec3 secondaryRim = uColorTealSecondary * (deepFresnel * 1.8 + diff2 * 0.25);
+
+          // 3. Subsurface Deep Teal Glow (#133336)
+          float scatter = pow(1.0 - NdotV, 2.0) * 0.6;
+          vec3 internalGlow = uColorTealDeep * (scatter + (vDisplacement + 0.3) * 0.4);
+
+          // 4. Specular Highlight Glints (#FFFFFF)
+          vec3 H1 = normalize(lightDir1 + V);
+          float spec1 = pow(max(dot(N, H1), 0.0), 64.0);
+          vec3 specGlaze = uColorHighlight * (spec1 * 2.2);
+
+          // Deep Obsidian Body Tone (#010001)
+          vec3 obsidianBody = vec3(0.004, 0.006, 0.008);
+
+          vec3 finalColor = obsidianBody + internalGlow + secondaryRim + primaryRim + specGlaze;
+          gl_FragColor = vec4(finalColor, 0.96);
+        }
+      `;
+
+      // -------------------------------------------------------------
+      // SHADERS: Outer Translucent Glass Lattice Ribbon
+      // -------------------------------------------------------------
+      const glassVertexShader = `
+        uniform float uTime;
         varying vec3 vNormal;
         varying vec3 vViewPosition;
         varying vec3 vWorldPosition;
-        varying float vNoise;
 
         void main() {
-          vec3 V = normalize(vViewPosition);
+          vNormal = normalize(normalMatrix * normal);
+          vec4 worldPos = modelMatrix * vec4(position, 1.0);
+          vWorldPosition = worldPos.xyz;
+          vec4 mvPosition = viewMatrix * worldPos;
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `;
+
+      const glassFragmentShader = `
+        uniform vec3 uColorTealPrimary;
+        uniform vec3 uColorTealSecondary;
+        uniform vec3 uColorHighlight;
+        uniform float uTime;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        varying vec3 vWorldPosition;
+
+        void main() {
           vec3 N = normalize(vNormal);
+          vec3 V = normalize(vViewPosition);
 
           float NdotV = max(dot(N, V), 0.0);
-          float fresnel = pow(1.0 - NdotV, 3.2);
-          float deepFresnel = pow(1.0 - NdotV, 1.9);
+          // Strong outer edge luminescence
+          float fresnel = pow(1.0 - NdotV, 2.5);
+          float rimThin = pow(1.0 - NdotV, 5.0);
 
-          // 1. Primary Teal Rim (#367D8A) along upper crest
-          vec3 dirPrimary = normalize(vec3(-0.85, 0.8, 0.4));
-          float rimPrimary = pow(max(dot(N, dirPrimary), 0.0), 2.2) * deepFresnel;
-          vec3 primaryGlow = uColorTealPrimary * rimPrimary * 3.2;
+          vec3 lightDir = normalize(vec3(-1.0, 1.2, 0.9));
+          vec3 H = normalize(lightDir + V);
+          float spec = pow(max(dot(N, H), 0.0), 96.0);
 
-          // 2. Secondary Teal Rim (#285F6B) along lower underbelly
-          vec3 dirSecondary = normalize(vec3(0.9, -0.7, 0.45));
-          float rimSecondary = pow(max(dot(N, dirSecondary), 0.0), 1.9) * deepFresnel;
-          vec3 secondaryGlow = uColorTealSecondary * rimSecondary * 2.6;
+          // Translucent glass transmission & chromatic dispersion
+          vec3 edgeColor = mix(uColorTealSecondary, uColorTealPrimary, fresnel);
+          vec3 specularLight = uColorHighlight * spec * 2.5 + uColorTealPrimary * (rimThin * 3.0);
+          
+          // Subtle internal refraction tint
+          vec3 refractionTint = uColorTealPrimary * 0.08;
 
-          // 3. Deep Teal Scatter (#133336)
-          float internalScatter = (1.0 - NdotV) * 0.22;
-          vec3 deepGlow = uColorTealDeep * internalScatter * 2.0;
+          vec3 finalColor = refractionTint + edgeColor * (fresnel * 1.6) + specularLight;
+          float alpha = clamp(0.18 + fresnel * 0.65 + spec * 0.3, 0.0, 0.92);
 
-          // 4. Razor White Highlight (#FFFFFF)
-          vec3 H = normalize(dirPrimary + V);
-          float spec = pow(max(dot(N, H), 0.0), 72.0);
-          vec3 specHighlight = uColorHighlight * spec * 2.0;
-
-          // Base near-black void body
-          vec3 baseBlack = vec3(0.005, 0.007, 0.009);
-
-          vec3 finalColor = baseBlack 
-                          + deepGlow 
-                          + secondaryGlow 
-                          + primaryGlow 
-                          + specHighlight;
-
-          float alpha = clamp(0.7 + fresnel * 0.3, 0.0, 1.0);
           gl_FragColor = vec4(finalColor, alpha);
         }
       `;
 
-      // Geometry: High resolution Icosahedron for smooth liquid surface
-      const geometryMain = new THREE.IcosahedronGeometry(2.35, 64);
-      const uniformsMain = {
+      // -------------------------------------------------------------
+      // 1. Create Inner Liquid Obsidian Mesh
+      // -------------------------------------------------------------
+      const kernelGeo = new THREE.IcosahedronGeometry(1.9, 64);
+      const kernelUniforms = {
         uTime: { value: 0 },
-        uSpeed: { value: 0.35 },
-        uNoiseDensity: { value: 0.75 },
-        uNoiseStrength: { value: 0.42 * intensity },
-        uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorTealPrimary: { value: new THREE.Color('#367D8A') },   // Primary Teal
-        uColorTealSecondary: { value: new THREE.Color('#285F6B') }, // Secondary Teal
-        uColorTealDeep: { value: new THREE.Color('#133336') },      // Deep Teal
-        uColorHighlight: { value: new THREE.Color('#FFFFFF') },     // Crisp White
-      };
-
-      const materialMain = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: uniformsMain,
-        transparent: true,
-        blending: THREE.NormalBlending,
-        depthWrite: true,
-      });
-
-      const meshMain = new THREE.Mesh(geometryMain, materialMain);
-      meshMain.position.set(0.65, 0.15, 0.0);
-      scene.add(meshMain);
-
-      // Satellite Droplet
-      const geometrySatellite = new THREE.IcosahedronGeometry(1.2, 48);
-      const uniformsSat = {
-        uTime: { value: 1.5 },
-        uSpeed: { value: 0.42 },
-        uNoiseDensity: { value: 0.95 },
-        uNoiseStrength: { value: 0.32 * intensity },
+        uNoiseStrength: { value: prefersReducedMotion ? 0.08 : 0.42 * intensity },
         uMouse: { value: new THREE.Vector2(0, 0) },
         uColorTealPrimary: { value: new THREE.Color('#367D8A') },
         uColorTealSecondary: { value: new THREE.Color('#285F6B') },
@@ -256,53 +264,135 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
         uColorHighlight: { value: new THREE.Color('#FFFFFF') },
       };
 
-      const materialSat = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: uniformsSat,
+      const kernelMat = new THREE.ShaderMaterial({
+        vertexShader: kernelVertexShader,
+        fragmentShader: kernelFragmentShader,
+        uniforms: kernelUniforms,
         transparent: true,
         blending: THREE.NormalBlending,
         depthWrite: true,
       });
 
-      const meshSat = new THREE.Mesh(geometrySatellite, materialSat);
-      meshSat.position.set(-2.8, -1.2, -0.6);
-      scene.add(meshSat);
+      const kernelMesh = new THREE.Mesh(kernelGeo, kernelMat);
+      masterGroup.add(kernelMesh);
 
-      // Ambient teal dust/spores particles
-      const particlesCount = 75;
-      const particleGeo = new THREE.BufferGeometry();
-      const posArray = new Float32Array(particlesCount * 3);
-      for (let i = 0; i < particlesCount * 3; i += 3) {
-        posArray[i] = (Math.random() - 0.5) * 14;
-        posArray[i + 1] = (Math.random() - 0.5) * 10;
-        posArray[i + 2] = (Math.random() - 0.5) * 8;
-      }
-      particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-      const particleMat = new THREE.PointsMaterial({
-        size: 0.035,
+      // -------------------------------------------------------------
+      // 2. Create Outer Translucent Glass Crystalline Ribbon Cage
+      // -------------------------------------------------------------
+      // High-precision TorusKnot represents the intricate, interwoven algorithmic paths
+      const glassGeo = new THREE.TorusKnotGeometry(2.35, 0.28, 140, 28, 2, 3);
+      const glassUniforms = {
+        uTime: { value: 0 },
+        uColorTealPrimary: { value: new THREE.Color('#5DA8B6') },
+        uColorTealSecondary: { value: new THREE.Color('#285F6B') },
+        uColorHighlight: { value: new THREE.Color('#FFFFFF') },
+      };
+
+      const glassMat = new THREE.ShaderMaterial({
+        vertexShader: glassVertexShader,
+        fragmentShader: glassFragmentShader,
+        uniforms: glassUniforms,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+
+      const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+      masterGroup.add(glassMesh);
+
+      // -------------------------------------------------------------
+      // 3. Gyroscopic Orbital Precision Rings (Algorithm Execution Loops)
+      // -------------------------------------------------------------
+      const ringGroup = new THREE.Group();
+      masterGroup.add(ringGroup);
+
+      // Ring 1 (Inner loop)
+      const ring1Geo = new THREE.TorusGeometry(3.1, 0.016, 16, 120);
+      const ring1Mat = new THREE.MeshBasicMaterial({
         color: new THREE.Color('#367D8A'),
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.55,
+      });
+      const ring1Mesh = new THREE.Mesh(ring1Geo, ring1Mat);
+      ring1Mesh.rotation.x = Math.PI * 0.38;
+      ring1Mesh.rotation.y = Math.PI * 0.12;
+      ringGroup.add(ring1Mesh);
+
+      // Ring 2 (Outer loop counter-inclination)
+      const ring2Geo = new THREE.TorusGeometry(3.55, 0.014, 16, 140);
+      const ring2Mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color('#285F6B'),
+        transparent: true,
+        opacity: 0.42,
+      });
+      const ring2Mesh = new THREE.Mesh(ring2Geo, ring2Mat);
+      ring2Mesh.rotation.x = -Math.PI * 0.28;
+      ring2Mesh.rotation.z = Math.PI * 0.22;
+      ringGroup.add(ring2Mesh);
+
+      // -------------------------------------------------------------
+      // 4. Memory Constellation Lattice (Deep Floating Sparse Particles)
+      // -------------------------------------------------------------
+      const particleCount = 85;
+      const particleGeo = new THREE.BufferGeometry();
+      const particlePos = new Float32Array(particleCount * 3);
+      const particleScales = new Float32Array(particleCount);
+
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        // Spherical shell distribution around the central sculpture
+        const radius = 2.8 + Math.random() * 5.2;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+
+        particlePos[i3] = radius * Math.sin(phi) * Math.cos(theta);
+        particlePos[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        particlePos[i3 + 2] = radius * Math.cos(phi);
+        particleScales[i] = Math.random() * 0.035 + 0.015;
+      }
+
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+      const particleMat = new THREE.PointsMaterial({
+        color: new THREE.Color('#5DA8B6'),
+        size: 0.045,
+        transparent: true,
+        opacity: 0.48,
         blending: THREE.AdditiveBlending,
       });
-      const particles = new THREE.Points(particleGeo, particleMat);
-      scene.add(particles);
 
-      // Pointer tracking & smooth parallax
-      const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+      const particlePoints = new THREE.Points(particleGeo, particleMat);
+      masterGroup.add(particlePoints);
+
+      // -------------------------------------------------------------
+      // Mouse, Scroll & Parallax Interpolation
+      // -------------------------------------------------------------
+      const mouse = {
+        x: 0,
+        y: 0,
+        targetX: 0,
+        targetY: 0,
+      };
+
+      let scrollY = 0;
+      let targetScrollY = 0;
 
       const handlePointerMove = (e: MouseEvent) => {
         if (!interactive) return;
         const rect = container.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-        mouse.targetX = x;
-        mouse.targetY = y;
+        // Normalized cursor coordinates (-1 to 1)
+        mouse.targetX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.targetY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      };
+
+      const handleScroll = () => {
+        targetScrollY = window.scrollY;
       };
 
       window.addEventListener('mousemove', handlePointerMove, { passive: true });
+      window.addEventListener('scroll', handleScroll, { passive: true });
 
+      // Handle Resize
       const handleResize = () => {
         if (!container || !renderer || !camera) return;
         const newW = container.clientWidth;
@@ -314,41 +404,76 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       window.addEventListener('resize', handleResize);
 
+      // Visibility Observer: Pause WebGL when hero is out of view for 60fps & battery efficiency
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            isVisible = entry.isIntersecting;
+          });
+        },
+        { threshold: 0.05 }
+      );
+      observer.observe(container);
+
       const clock = new THREE.Clock();
 
+      // -------------------------------------------------------------
+      // Animation Loop
+      // -------------------------------------------------------------
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
 
-        const elapsedTime = clock.getElapsedTime();
+        // Don't waste GPU cycles when out of viewport or tab is inactive
+        if (!isVisible || document.hidden) return;
 
-        mouse.x += (mouse.targetX - mouse.x) * 0.04;
-        mouse.y += (mouse.targetY - mouse.y) * 0.04;
+        // delta removed
+        const elapsed = clock.getElapsedTime();
 
-        uniformsMain.uTime.value = elapsedTime;
-        uniformsMain.uMouse.value.set(mouse.x, mouse.y);
+        // Smooth mouse damping (Lerp)
+        mouse.x += (mouse.targetX - mouse.x) * 0.045;
+        mouse.y += (mouse.targetY - mouse.y) * 0.045;
 
-        uniformsSat.uTime.value = elapsedTime + 2.0;
-        uniformsSat.uMouse.value.set(mouse.x, mouse.y);
+        // Smooth scroll damping
+        scrollY += (targetScrollY - scrollY) * 0.06;
 
-        meshMain.rotation.x = Math.sin(elapsedTime * 0.15) * 0.18 + mouse.y * 0.28;
-        meshMain.rotation.y = elapsedTime * 0.11 + mouse.x * 0.32;
-        meshMain.position.y = 0.15 + Math.sin(elapsedTime * 0.38) * 0.16;
+        const timeRate = prefersReducedMotion ? 0.05 : 1.0;
 
-        meshSat.rotation.x = elapsedTime * 0.16;
-        meshSat.rotation.y = -elapsedTime * 0.14;
-        meshSat.position.x = -2.8 + Math.cos(elapsedTime * 0.28) * 0.35 + mouse.x * 0.22;
-        meshSat.position.y = -1.2 + Math.sin(elapsedTime * 0.32) * 0.25 + mouse.y * 0.18;
+        // 1. Update Shaders
+        kernelUniforms.uTime.value = elapsed * timeRate;
+        kernelUniforms.uMouse.value.set(mouse.x, mouse.y);
+        glassUniforms.uTime.value = elapsed * timeRate;
 
-        particles.rotation.y = elapsedTime * 0.012;
+        // 2. Sculptural Kinematics: Organic multi-speed harmonic rotation
+        kernelMesh.rotation.x = elapsed * 0.08 * timeRate + mouse.y * 0.25;
+        kernelMesh.rotation.y = elapsed * 0.12 * timeRate + mouse.x * 0.35;
+        kernelMesh.position.y = Math.sin(elapsed * 0.42 * timeRate) * 0.14;
 
-        if (camera) {
-          camera.position.x = mouse.x * 0.4;
-          camera.position.y = mouse.y * 0.3;
-          camera.lookAt(0, 0, 0);
-        }
+        // Glass ribbon orbits on counter-axis with refractive depth
+        glassMesh.rotation.x = -elapsed * 0.09 * timeRate + mouse.y * 0.38;
+        glassMesh.rotation.y = elapsed * 0.14 * timeRate + mouse.x * 0.45;
+        glassMesh.rotation.z = Math.sin(elapsed * 0.25 * timeRate) * 0.2;
 
-        if (renderer && scene && camera) {
-          renderer.render(scene, camera);
+        // 3. Orbital Precision Rings
+        ring1Mesh.rotation.z = elapsed * 0.18 * timeRate;
+        ring2Mesh.rotation.y = -elapsed * 0.14 * timeRate;
+
+        // 4. Memory constellation drift
+        particlePoints.rotation.y = elapsed * 0.02 * timeRate + mouse.x * 0.08;
+        particlePoints.rotation.x = mouse.y * 0.06;
+
+        // 5. Scroll depth interaction: gently tilts and tracks downwards on scroll
+        const scrollFactor = Math.min(scrollY / 800, 1.2);
+        masterGroup.position.y = 0.15 - scrollFactor * 0.85;
+        masterGroup.rotation.x = mouse.y * 0.15 + scrollFactor * 0.22;
+        masterGroup.rotation.y = mouse.x * 0.25;
+
+        // Camera micro-sway
+        if (camera && renderer && scene) {
+          camera.position.x = mouse.x * 0.35;
+        camera.position.y = mouse.y * 0.25;
+        camera.lookAt(masterGroup.position.x * 0.3, masterGroup.position.y * 0.3, 0);
+
+        renderer.render(scene, camera);
         }
       };
 
@@ -356,22 +481,29 @@ export const LiquidSculpture: React.FC<LiquidSculptureProps> = ({
 
       return () => {
         window.removeEventListener('mousemove', handlePointerMove);
+        window.removeEventListener('scroll', handleScroll);
         window.removeEventListener('resize', handleResize);
+        observer.disconnect();
         cancelAnimationFrame(animationFrameId);
 
         if (renderer && renderer.domElement && container.contains(renderer.domElement)) {
           container.removeChild(renderer.domElement);
           renderer.dispose();
         }
-        geometryMain.dispose();
-        materialMain.dispose();
-        geometrySatellite.dispose();
-        materialSat.dispose();
+
+        kernelGeo.dispose();
+        kernelMat.dispose();
+        glassGeo.dispose();
+        glassMat.dispose();
+        ring1Geo.dispose();
+        ring1Mat.dispose();
+        ring2Geo.dispose();
+        ring2Mat.dispose();
         particleGeo.dispose();
         particleMat.dispose();
       };
     } catch (err) {
-      console.warn('WebGL initialization failed, falling back to CSS glow sculpture:', err);
+      console.warn('WebGL initialization failed, falling back to CSS luxury glow sculpture:', err);
       setHasWebGL(false);
     }
   }, [intensity, interactive]);

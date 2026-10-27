@@ -1,13 +1,25 @@
-﻿/**
- * Audio engine for CodeQuest using the authentic roulette wheel sound asset.
- * Source: public/audio/roulette-spin.mp3 (7.08s authentic casino spin)
+/**
+ * Precision audio engine for CodeQuest Roulette Wheel.
+ * Source: public/audio/roulette-spin.mp3
+ *
+ * Guarantees:
+ * 1. Sound starts immediately on user spin action.
+ * 2. Sound duration is synchronized with wheel animation.
+ * 3. Sound stops immediately or fades cleanly when wheel stops (never continues playing).
+ * 4. Prevents overlapping audio instances on repeated or rapid user clicks.
+ * 5. Handles playback failure and browser autoplay restrictions gracefully.
+ * 6. Clean lifecycle cleanup on component unmount or sound toggle.
  */
 
 let rouletteAudio: HTMLAudioElement | null = null;
-let fadeInterval: number | null = null;
+let fadeIntervalId: number | null = null;
+let autoStopTimeoutId: number | null = null;
+let activePlayPromise: Promise<void> | null = null;
+
+const DEFAULT_VOLUME = 0.85;
 
 /**
- * Initializes and returns the shared HTMLAudioElement for the roulette spin.
+ * Lazily creates and configures the singleton roulette audio element.
  */
 function getRouletteAudio(): HTMLAudioElement | null {
   if (typeof window === 'undefined') return null;
@@ -16,9 +28,9 @@ function getRouletteAudio(): HTMLAudioElement | null {
     try {
       rouletteAudio = new Audio('/audio/roulette-spin.mp3');
       rouletteAudio.preload = 'auto';
-      rouletteAudio.volume = 0.85;
+      rouletteAudio.volume = DEFAULT_VOLUME;
 
-      // Handle loading errors gracefully so the wheel is never blocked
+      // Handle loading failure gracefully without breaking the wheel
       rouletteAudio.addEventListener('error', (e) => {
         console.warn('Roulette audio load error (wheel will continue without sound):', e);
       });
@@ -31,82 +43,134 @@ function getRouletteAudio(): HTMLAudioElement | null {
   return rouletteAudio;
 }
 
+export interface PlayRouletteAudioOptions {
+  durationMs?: number;
+  onComplete?: () => void;
+}
+
 /**
- * Plays the roulette spin audio immediately in response to user click.
- * - Stops any previously running playback instance.
+ * Initiates the roulette audio playback in response to user click.
+ * - Stops any currently running playback or fade.
  * - Resets playback position to 0.
- * - Returns a clean cancellation/stop function.
+ * - Schedules auto-stop if durationMs is provided.
+ * - Returns a cancellation function that halts audio immediately.
  */
-export function playRouletteAudio(onComplete?: () => void): () => void {
+export function playRouletteAudio(
+  optionsOrCallback?: PlayRouletteAudioOptions | (() => void)
+): () => void {
+  const options: PlayRouletteAudioOptions =
+    typeof optionsOrCallback === 'function'
+      ? { onComplete: optionsOrCallback }
+      : optionsOrCallback || {};
+
   const audio = getRouletteAudio();
   if (!audio) {
-    if (onComplete) onComplete();
+    if (options.onComplete) options.onComplete();
     return () => {};
   }
 
-  // Clear any existing fade-out timers
-  if (fadeInterval) {
-    window.clearInterval(fadeInterval);
-    fadeInterval = null;
-  }
+  // Clear any existing fade intervals and auto-stop timers
+  stopRouletteAudio(0);
 
   try {
-    // Reset position cleanly before starting
-    audio.pause();
     audio.currentTime = 0;
-    audio.volume = 0.85;
+    audio.volume = DEFAULT_VOLUME;
 
-    // Attach completion listener
+    // Attach completion listener if the audio naturally ends before spin finishes
     const handleEnded = () => {
       audio.removeEventListener('ended', handleEnded);
-      if (onComplete) onComplete();
+      if (options.onComplete) options.onComplete();
     };
     audio.addEventListener('ended', handleEnded, { once: true });
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        // Autoplay policy or user gesture restriction handled gracefully
-        console.warn('Audio playback prevented or interrupted:', err);
-      });
+      activePlayPromise = playPromise;
+      playPromise
+        .then(() => {
+          activePlayPromise = null;
+        })
+        .catch((err) => {
+          activePlayPromise = null;
+          console.warn('Roulette audio playback prevented or interrupted:', err);
+        });
     }
   } catch (err) {
     console.warn('Error starting roulette audio:', err);
   }
 
-  // Return stop function with subtle fade-out
+  // If a maximum duration is specified, schedule an authoritative stop
+  if (options.durationMs && options.durationMs > 0) {
+    autoStopTimeoutId = window.setTimeout(() => {
+      autoStopTimeoutId = null;
+      stopRouletteAudio(100);
+      if (options.onComplete) options.onComplete();
+    }, options.durationMs);
+  }
+
+  // Return cancel/stop function
   return () => {
-    stopRouletteAudio(200);
+    stopRouletteAudio(80);
   };
 }
 
 /**
- * Smoothly stops the roulette audio with a short fade-out to prevent clipping.
+ * Stops the roulette audio cleanly.
+ * If fadeDurationMs > 0, performs a rapid micro fade-out to prevent audio pops.
+ * If fadeDurationMs === 0, stops immediately.
  */
-export function stopRouletteAudio(fadeDurationMs = 200) {
-  const audio = rouletteAudio;
-  if (!audio || audio.paused) return;
-
-  if (fadeInterval) {
-    window.clearInterval(fadeInterval);
-    fadeInterval = null;
+export function stopRouletteAudio(fadeDurationMs = 100): void {
+  // Clear any pending auto-stop timer
+  if (autoStopTimeoutId !== null) {
+    window.clearTimeout(autoStopTimeoutId);
+    autoStopTimeoutId = null;
   }
 
-  const steps = 10;
-  const stepTime = fadeDurationMs / steps;
+  // Clear any in-progress fade interval
+  if (fadeIntervalId !== null) {
+    window.clearInterval(fadeIntervalId);
+    fadeIntervalId = null;
+  }
+
+  const audio = rouletteAudio;
+  if (!audio) return;
+
+  const immediatePauseAndReset = () => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = DEFAULT_VOLUME;
+    } catch {
+      // Safe fallback if pause was called while promise pending
+    }
+  };
+
+  // If already paused or immediate stop requested
+  if (audio.paused || fadeDurationMs <= 0 || audio.volume <= 0.05) {
+    if (activePlayPromise) {
+      activePlayPromise
+        .then(() => immediatePauseAndReset())
+        .catch(() => immediatePauseAndReset());
+    } else {
+      immediatePauseAndReset();
+    }
+    return;
+  }
+
+  // Smooth micro-fade to avoid popping
+  const steps = 6;
+  const stepTime = Math.max(10, Math.floor(fadeDurationMs / steps));
   const volumeStep = audio.volume / steps;
 
-  fadeInterval = window.setInterval(() => {
+  fadeIntervalId = window.setInterval(() => {
     if (audio.volume > volumeStep) {
       audio.volume = Math.max(0, audio.volume - volumeStep);
     } else {
-      audio.volume = 0;
-      audio.pause();
-      audio.currentTime = 0;
-      if (fadeInterval) {
-        window.clearInterval(fadeInterval);
-        fadeInterval = null;
+      if (fadeIntervalId !== null) {
+        window.clearInterval(fadeIntervalId);
+        fadeIntervalId = null;
       }
+      immediatePauseAndReset();
     }
   }, stepTime);
 }

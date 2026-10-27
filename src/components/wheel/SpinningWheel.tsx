@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RotateCw,
@@ -18,11 +18,15 @@ import { TOPICS } from '../../data/topics';
 import type { Topic, Category, Difficulty } from '../../types/topic';
 import { useCodeQuest } from '../../context/CodeQuestContext';
 import { getTodayDateString } from '../../utils/date';
-import { playRouletteAudio } from '../../utils/audio';
+import { playRouletteAudio, stopRouletteAudio } from '../../utils/audio';
 
 interface SpinningWheelProps {
   onSelectTopic?: (topic: Topic) => void;
 }
+
+// Unified authoritative duration for both wheel physics and audio playback
+const SPIN_DURATION_MS = 5500;
+const SPIN_DURATION_SEC = 5.5;
 
 export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) => {
   const navigate = useNavigate();
@@ -44,8 +48,6 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
     return true;
   });
 
-  const cancelAudioRef = useRef<(() => void) | null>(null);
-
   const toggleSound = () => {
     setSoundEnabled((prev) => {
       const next = !prev;
@@ -53,26 +55,23 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
         localStorage.setItem('codequest_sound', String(next));
       }
       if (!next) {
-        cancelAudioRef.current?.();
+        // If user mutes while spinning, silence audio immediately
+        stopRouletteAudio(0);
       }
       return next;
     });
   };
 
-  useEffect(() => {
-    return () => {
-      cancelAudioRef.current?.();
-    };
-  }, []);
-
-  // Wheel Animation State (6.8s authentic roulette duration sync)
-  const SPIN_DURATION_MS = 6800;
+  // Wheel Animation & Audio State
   const [rotation, setRotation] = useState<number>(0);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [showResultCard, setShowResultCard] = useState<boolean>(false);
 
   const wheelRef = useRef<SVGSVGElement | null>(null);
+  const isSpinningRef = useRef<boolean>(false);
+  const pendingTopicRef = useRef<Topic | null>(null);
+  const spinSafetyTimerRef = useRef<number | null>(null);
   const todayStr = getTodayDateString();
 
   // Daily Challenge Topic (deterministic)
@@ -84,7 +83,8 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
   const eligibleTopics = useMemo(() => {
     return TOPICS.filter((t) => {
       if (selectedCategories.length > 0) {
-        const matchesCategory = selectedCategories.includes(t.category) ||
+        const matchesCategory =
+          selectedCategories.includes(t.category) ||
           (t.category === 'PROGRAMMING' && selectedCategories.includes('OOPS'));
         if (!matchesCategory) return false;
       }
@@ -114,73 +114,114 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
     return idx >= 0 ? idx : 0;
   };
 
-  // Spin with authentic roulette sound and deceleration
-  const handleSpin = () => {
-    if (isSpinning || eligibleTopics.length === 0) return;
+  /**
+   * Finalizes the spin sequence once and only once:
+   * 1. Stops roulette audio immediately (guarantees sound never plays after wheel stops).
+   * 2. Reveals selected topic card.
+   * 3. Triggers confetti.
+   */
+  const handleSpinComplete = useCallback(() => {
+    if (!isSpinningRef.current) return;
+    isSpinningRef.current = false;
 
-    // Start roulette MP3 sound immediately on user gesture
-    if (soundEnabled) {
-      cancelAudioRef.current?.();
-      cancelAudioRef.current = playRouletteAudio();
+    // Clear safety timeout
+    if (spinSafetyTimerRef.current !== null) {
+      window.clearTimeout(spinSafetyTimerRef.current);
+      spinSafetyTimerRef.current = null;
     }
 
+    // Stop audio with a crisp 80ms micro-fade to prevent pops, ensuring complete silence
+    stopRouletteAudio(80);
+
+    const winningTopic = pendingTopicRef.current;
+    setIsSpinning(false);
+
+    if (winningTopic) {
+      setSelectedTopic(winningTopic);
+      setShowResultCard(true);
+      if (onSelectTopic) onSelectTopic(winningTopic);
+
+      // Elegant teal-themed celebration confetti
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: { y: 0.65 },
+        colors: ['#367D8A', '#FFFFFF', '#285F6B', '#133336', '#5DA8B6'],
+      });
+    }
+  }, [onSelectTopic]);
+
+  // Component cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isSpinningRef.current = false;
+      if (spinSafetyTimerRef.current !== null) {
+        window.clearTimeout(spinSafetyTimerRef.current);
+        spinSafetyTimerRef.current = null;
+      }
+      stopRouletteAudio(0);
+    };
+  }, []);
+
+  // Spin the wheel with synchronized physics and audio duration
+  const handleSpin = () => {
+    if (isSpinning || isSpinningRef.current || eligibleTopics.length === 0) return;
+
+    isSpinningRef.current = true;
     setIsSpinning(true);
     setShowResultCard(false);
 
+    // Pick random topic from eligible pool
     const randomTopic = eligibleTopics[Math.floor(Math.random() * eligibleTopics.length)];
+    pendingTopicRef.current = randomTopic;
     const targetCategoryIndex = getCategoryIndex(randomTopic.category);
 
     // Compute exact rotation to land on target slice at 12 o'clock pointer
     const nextRotation = calculateRotationToCategory(targetCategoryIndex, rotation, 8, 7);
     setRotation(nextRotation);
 
-    // Synchronize completion with roulette sound duration (~6.8s)
-    setTimeout(() => {
-      cancelAudioRef.current?.();
-      setIsSpinning(false);
-      setSelectedTopic(randomTopic);
-      setShowResultCard(true);
-      if (onSelectTopic) onSelectTopic(randomTopic);
-
-      // Elegant teal-themed celebration
-      confetti({
-        particleCount: 55,
-        spread: 65,
-        origin: { y: 0.65 },
-        colors: ['#367D8A', '#FFFFFF', '#285F6B', '#133336', '#5DA8B6'],
+    // Start roulette sound with exact duration sync
+    if (soundEnabled) {
+      playRouletteAudio({
+        durationMs: SPIN_DURATION_MS,
       });
-    }, SPIN_DURATION_MS);
+    }
+
+    // Safety fallback timer in case transitionend is delayed or skipped
+    spinSafetyTimerRef.current = window.setTimeout(() => {
+      handleSpinComplete();
+    }, SPIN_DURATION_MS + 60);
   };
 
   // Daily Challenge Spin
   const handleSpinForDaily = () => {
-    if (!dailyTopic || isSpinning) return;
+    if (!dailyTopic || isSpinning || isSpinningRef.current) return;
 
-    if (soundEnabled) {
-      cancelAudioRef.current?.();
-      cancelAudioRef.current = playRouletteAudio();
-    }
-
+    isSpinningRef.current = true;
     setIsSpinning(true);
     setShowResultCard(false);
+    pendingTopicRef.current = dailyTopic;
 
     const targetIndex = getCategoryIndex(dailyTopic.category);
     const nextRotation = calculateRotationToCategory(targetIndex, rotation, 8, 7);
     setRotation(nextRotation);
 
-    setTimeout(() => {
-      cancelAudioRef.current?.();
-      setIsSpinning(false);
-      setSelectedTopic(dailyTopic);
-      setShowResultCard(true);
-
-      confetti({
-        particleCount: 65,
-        spread: 75,
-        origin: { y: 0.65 },
-        colors: ['#367D8A', '#FFFFFF', '#285F6B', '#5DA8B6'],
+    if (soundEnabled) {
+      playRouletteAudio({
+        durationMs: SPIN_DURATION_MS,
       });
-    }, SPIN_DURATION_MS);
+    }
+
+    spinSafetyTimerRef.current = window.setTimeout(() => {
+      handleSpinComplete();
+    }, SPIN_DURATION_MS + 60);
+  };
+
+  // Authoritative transition end listener directly on the wheel SVG
+  const handleTransitionEnd = (e: React.TransitionEvent<SVGSVGElement>) => {
+    if (e.propertyName === 'transform') {
+      handleSpinComplete();
+    }
   };
 
   // Slices geometry
@@ -212,34 +253,37 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
         {/* Mode Selector */}
         <div className="flex items-center rounded-xl border border-[#133336] bg-[#030809] p-1 text-xs font-medium">
           <button
-            onClick={() => setPracticeMode('discovery')}
+            onClick={() => !isSpinning && setPracticeMode('discovery')}
+            disabled={isSpinning}
             className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 transition-all ${
               practiceMode === 'discovery'
                 ? 'bg-[#367D8A] text-white font-semibold shadow-sm shadow-[#367D8A]/30'
                 : 'text-white/50 hover:text-white'
-            }`}
+            } ${isSpinning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <RotateCw className="h-3.5 w-3.5" />
             <span>Discovery Wheel</span>
           </button>
           <button
-            onClick={() => setPracticeMode('daily')}
+            onClick={() => !isSpinning && setPracticeMode('daily')}
+            disabled={isSpinning}
             className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 transition-all ${
               practiceMode === 'daily'
                 ? 'bg-[#285F6B] text-white font-semibold shadow-sm'
                 : 'text-white/50 hover:text-white'
-            }`}
+            } ${isSpinning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Calendar className="h-3.5 w-3.5" />
             <span>Daily Challenge</span>
           </button>
           <button
-            onClick={() => setPracticeMode('syllabus')}
+            onClick={() => !isSpinning && setPracticeMode('syllabus')}
+            disabled={isSpinning}
             className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 transition-all ${
               practiceMode === 'syllabus'
                 ? 'bg-[#133336] text-white font-semibold border border-[#367D8A]/40'
                 : 'text-white/50 hover:text-white'
-            }`}
+            } ${isSpinning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Sliders className="h-3.5 w-3.5" />
             <span>Structured Prep</span>
@@ -271,9 +315,10 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                 style={{
                   transform: `rotate(${rotation}deg)`,
                   transition: isSpinning
-                    ? 'transform 6.8s cubic-bezier(0.12, 0.82, 0.2, 1)'
+                    ? `transform ${SPIN_DURATION_SEC}s cubic-bezier(0.18, 0.78, 0.22, 1)`
                     : 'none',
                 }}
+                onTransitionEnd={handleTransitionEnd}
               >
                 <defs>
                   {WHEEL_CATEGORIES.map((cat, i) => (
@@ -400,12 +445,18 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                 disabled={isSpinning || eligibleTopics.length === 0}
                 className={`absolute z-20 flex h-20 w-20 flex-col items-center justify-center rounded-full text-center transition-all duration-300 ${
                   isSpinning
-                    ? 'cursor-not-allowed bg-[#061214] text-white/40 border border-[#133336] scale-95'
+                    ? 'cursor-not-allowed bg-[#061214] text-white/40 border border-[#133336] scale-95 opacity-80'
                     : eligibleTopics.length === 0
                     ? 'cursor-not-allowed bg-[#061214] text-white/30 border border-[#133336]'
-                    : 'bg-gradient-to-tr from-[#133336] via-[#285F6B] to-[#367D8A] text-white shadow-xl shadow-[#367D8A]/30 hover:scale-105 active:scale-95 border-2 border-[#5DA8B6]/60'
+                    : 'bg-gradient-to-tr from-[#133336] via-[#285F6B] to-[#367D8A] text-white shadow-xl shadow-[#367D8A]/30 hover:scale-105 active:scale-95 border-2 border-[#5DA8B6]/60 cursor-pointer'
                 }`}
-                title={eligibleTopics.length === 0 ? 'No topics match current filters' : 'Spin the roulette wheel!'}
+                title={
+                  isSpinning
+                    ? 'Roulette in motion...'
+                    : eligibleTopics.length === 0
+                    ? 'No topics match current filters'
+                    : 'Spin the roulette wheel!'
+                }
               >
                 <RotateCw className={`h-6 w-6 ${isSpinning ? 'animate-spin' : ''}`} />
                 <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">
@@ -426,7 +477,11 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                 }`}
                 title={soundEnabled ? 'Mute roulette audio' : 'Enable roulette audio'}
               >
-                {soundEnabled ? <Volume2 className="h-3.5 w-3.5 text-[#367D8A]" /> : <VolumeX className="h-3.5 w-3.5 text-white/40" />}
+                {soundEnabled ? (
+                  <Volume2 className="h-3.5 w-3.5 text-[#367D8A]" />
+                ) : (
+                  <VolumeX className="h-3.5 w-3.5 text-white/40" />
+                )}
                 <span>{soundEnabled ? 'Roulette Sound ON' : 'Audio Muted'}</span>
               </button>
 
@@ -441,11 +496,15 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
 
               <button
                 onClick={() => {
+                  if (isSpinning) return;
                   setSelectedCategories([]);
                   setSelectedDifficulty('All');
                   setOnlyDueRevisions(false);
                 }}
-                className="text-[#367D8A] hover:text-[#5DA8B6] transition-colors underline-offset-4 hover:underline"
+                disabled={isSpinning}
+                className={`text-[#367D8A] hover:text-[#5DA8B6] transition-colors underline-offset-4 hover:underline ${
+                  isSpinning ? 'opacity-40 cursor-not-allowed' : ''
+                }`}
               >
                 Reset filters
               </button>
@@ -502,7 +561,9 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                   <button
                     onClick={handleSpin}
                     disabled={isSpinning}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-[#133336] bg-[#061214] px-4 py-3 text-sm font-medium text-white/70 hover:text-white hover:border-[#367D8A]/60 transition-colors"
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border border-[#133336] bg-[#061214] px-4 py-3 text-sm font-medium text-white/70 hover:text-white hover:border-[#367D8A]/60 transition-colors ${
+                      isSpinning ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     <RotateCw className="h-4 w-4" />
                     <span>Spin Again</span>
@@ -546,12 +607,13 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                   {(['All', 'Beginner', 'Intermediate', 'Advanced'] as const).map((diff) => (
                     <button
                       key={diff}
+                      disabled={isSpinning}
                       onClick={() => !isSpinning && setSelectedDifficulty(diff)}
                       className={`rounded-lg py-1.5 text-xs transition-all ${
                         selectedDifficulty === diff
                           ? 'bg-[#367D8A] text-white font-semibold shadow-sm'
                           : 'border border-[#133336] bg-[#020506] text-white/50 hover:text-white'
-                      }`}
+                      } ${isSpinning ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {diff}
                     </button>
@@ -570,12 +632,13 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                     return (
                       <button
                         key={cat.category}
+                        disabled={isSpinning}
                         onClick={() => toggleCategory(cat.category)}
                         className={`flex items-center gap-2 rounded-xl p-2 text-left text-xs border transition-all ${
                           isSelected
                             ? 'border-[#367D8A] bg-[#133336]/40 text-white font-medium shadow-sm'
                             : 'border-[#133336]/60 bg-[#020506] text-white/50 hover:text-white'
-                        }`}
+                        } ${isSpinning ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <span
                           className="h-2.5 w-2.5 rounded-full shrink-0"
@@ -590,7 +653,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
 
               {/* Due Revisions Toggle */}
               <div className="pt-2 border-t border-[#133336]/40">
-                <label className="flex items-center justify-between cursor-pointer">
+                <label className={`flex items-center justify-between ${isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                   <div className="flex flex-col">
                     <span className="text-xs font-medium text-white/80">
                       Include Due Revisions Only
@@ -601,6 +664,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
                   </div>
                   <input
                     type="checkbox"
+                    disabled={isSpinning}
                     checked={onlyDueRevisions}
                     onChange={(e) => setOnlyDueRevisions(e.target.checked)}
                     className="h-4 w-4 rounded border-[#133336] bg-[#020506] text-[#367D8A] focus:ring-[#367D8A]"
@@ -655,7 +719,10 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
             <div className="flex flex-wrap items-center gap-4">
               <button
                 onClick={() => navigate(`/practice/session/${dailyTopic.id}`)}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#285F6B] to-[#367D8A] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#367D8A]/20 hover:brightness-110 active:scale-95 transition-all"
+                disabled={isSpinning}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#285F6B] to-[#367D8A] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#367D8A]/20 hover:brightness-110 active:scale-95 transition-all ${
+                  isSpinning ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <span>Accept Today's Challenge</span>
                 <ArrowRight className="h-4 w-4" />
@@ -664,10 +731,12 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({ onSelectTopic }) =
               <button
                 onClick={handleSpinForDaily}
                 disabled={isSpinning}
-                className="flex items-center gap-2 rounded-xl border border-[#133336] bg-[#061214] px-5 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors"
+                className={`flex items-center gap-2 rounded-xl border border-[#133336] bg-[#061214] px-5 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors ${
+                  isSpinning ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <RotateCw className={`h-4 w-4 ${isSpinning ? 'animate-spin text-[#367D8A]' : ''}`} />
-                <span>Spin Wheel for Today</span>
+                <span>{isSpinning ? 'Spinning...' : 'Spin Wheel for Today'}</span>
               </button>
             </div>
           </div>
